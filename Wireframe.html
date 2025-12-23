@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Team Standup Logger - Android FE Wireframes (Acceptance Criteria)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <style>
+    :root{
+      --primary:#6200ea; --onPrimary:#fff; --surface:#fffbfe; --onSurface:#1c1b1f;
+      --surface2:#ffffff; --outline:#e7e0ec; --subtle:#49454f; --ok:#2e7d32; --warn:#e65100; --err:#b00020;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Roboto,Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#6200ea,#3700b3);min-height:100vh;padding:24px}
+    .wrap{max-width:1300px;margin:0 auto;display:flex;gap:24px;align-items:flex-start}
+    h1{color:#fff;text-align:center;margin:0 0 16px}
+    .subtitle{color:#fff;opacity:.9;text-align:center;margin:0 0 24px}
+    .side{width:260px;background:#fff;border-radius:24px;padding:16px 12px;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+    .side h3{margin:8px 12px 12px;color:var(--primary)}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;color:#333;cursor:pointer}
+    .nav-item:hover{background:#f4f1ff}
+    .nav-item.active{background:#ede7ff;color:#311b92}
+    .phone{flex:1;display:flex;justify-content:center}
+    .device{width:420px;background:var(--surface2);border-radius:30px;box-shadow:0 8px 40px rgba(0,0,0,.35);overflow:hidden;border:8px solid #222}
+    .status{height:24px;background:#111;color:#ddd;font-size:12px;display:flex;align-items:center;justify-content:flex-end;padding:0 10px;gap:10px}
+    .header{height:56px;display:flex;align-items:center;padding:0 4px 0 16px;border-bottom:1px solid var(--outline);background:var(--primary);color:#fff;position:sticky;top:0;z-index:2}
+    .header .title{font-weight:400;font-size:20px;letter-spacing:0.15px;flex:1}
+    .header .back-btn{background:transparent;border:none;color:#fff;width:48px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;margin-right:8px}
+    .header .back-btn:hover{background:rgba(255,255,255,0.08)}
+    .header .menu-btn{background:transparent;border:none;color:#fff;width:48px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%}
+    .header .menu-btn:hover{background:rgba(255,255,255,0.08)}
+    .content{height:680px;overflow:auto;background:var(--surface);padding:16px 16px 24px}
+    .page-header{margin-bottom:24px}
+    .page-title{font-size:28px;font-weight:400;color:var(--onSurface);margin-bottom:4px;letter-spacing:0}
+    .page-subtitle{font-size:14px;color:var(--subtle);letter-spacing:0.25px}
+    .banner{background:#fff3cd;color:#664d03;border:1px solid #ffecb5;padding:10px 12px;border-radius:12px;margin-bottom:12px;font-size:13px}
+    .banner.ok{background:#e8f5e9;color:#1b5e20;border-color:#c8e6c9}
+    .banner.err{background:#fdecea;color:#b71c1c;border-color:#f5c6cb}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--outline);background:#fff;font-size:12px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid var(--outline);background:#fff;cursor:pointer}
+    .btn.primary{background:var(--primary);color:#fff;border-color:transparent}
+    .btn.warn{color:#d32f2f;border-color:#f4c7c3;background:#fff}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .card{background:#fff;border:none;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24);margin-bottom:12px}
+    .card + .card{margin-top:0}
+    .sec-title{margin:24px 0 12px;font-size:14px;color:var(--primary);font-weight:600;letter-spacing:0.1px;text-transform:uppercase}
+    .field{margin-bottom:12px}
+    .label{font-size:12px;color:#555;margin-bottom:6px}
+    .inp,.txt,.sel{width:100%;padding:10px 12px;border:1px solid var(--outline);border-radius:12px;background:#fff;font-size:14px}
+    .txt{min-height:84px;resize:vertical}
+    .req .label:after{content:" *";color:var(--err)}
+    .err-msg{color:var(--err);font-size:12px;margin-top:6px;display:none}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{display:flex;gap:10px;align-items:flex-start;padding:10px 10px;border-radius:12px;border:1px solid var(--outline);background:#fff}
+    .av{width:32px;height:32px;border-radius:50%;background:#ede7f6;display:flex;align-items:center;justify-content:center;color:#5e35b1;font-weight:700;flex:0 0 32px}
+    .itxt{flex:1}
+    .meta{font-size:12px;color:#666}
+    .pill{padding:4px 8px;border-radius:999px;font-size:11px}
+    .pill.ok{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9}
+    .pill.miss{background:#fff3e0;color:#e65100;border:1px solid #ffe0b2}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;flex-direction:column}
+    .actions .btn{width:100%}
+    .meta + .meta{margin-top:4px}
+    .form-group{margin-bottom:20px}
+    .form-label{display:block;margin-bottom:8px;color:#1c1b1f;font-weight:500;font-size:12px;letter-spacing:0.4px;text-transform:uppercase}
+    .form-input{width:100%;padding:16px 12px 8px 12px;border:none;border-bottom:1px solid #79747e;background:#e7e0ec;border-radius:4px 4px 0 0;font-size:16px;font-family:Roboto,sans-serif;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);color:#1c1b1f}
+    .form-input:focus{outline:none;border-bottom:2px solid #6200ea;background:#f3edf7}
+    .list-item{display:flex;align-items:center;padding:16px;border-bottom:1px solid #e7e0ec;background:#fff;border-radius:8px;margin-bottom:8px}
+    .list-item-avatar{width:40px;height:40px;border-radius:50%;background:#e8def8;color:#6200ea;display:flex;align-items:center;justify-content:center;font-weight:500;margin-right:16px;font-size:14px;flex-shrink:0}
+    .list-item-content{flex:1}
+    .list-item-title{font-weight:500;color:#1c1b1f;margin-bottom:4px;font-size:16px;letter-spacing:0.15px}
+    .list-item-subtitle{color:#49454f;font-size:14px;letter-spacing:0.25px}
+    .bottom{height:70px;border-top:1px solid var(--outline);display:flex;align-items:center;justify-content:space-around;background:#fff;position:sticky;bottom:0}
+    .nav{display:flex;gap:4px;flex-direction:column;align-items:center;justify-content:center;color:#49454f;font-size:11px;border-radius:16px;padding:6px 8px;cursor:pointer;transition:background .2s}
+    .nav:hover{background:rgba(98,0,234,0.08)}
+    .nav-label{font-size:12px;font-weight:500;letter-spacing:.5px}
+    .nav.active{color:var(--primary);position:relative}
+    .nav.active::before{content:"";position:absolute;top:2px;left:50%;transform:translateX(-50%);width:64px;height:32px;background:#e8def8;border-radius:16px;z-index:-1}
+    .ghost{color:#aaa;font-style:italic}
+    .kbd{font-family:ui-monospace,Consolas,monospace;background:#f4f4f4;border:1px solid #ddd;border-radius:6px;padding:0 6px}
+    /* Material Design 3 overrides */
+    .label{letter-spacing:0.4px;text-transform:uppercase}
+    .inp,.txt,.sel{border:none;border-bottom:1px solid #79747e;background:#e7e0ec;border-radius:4px 4px 0 0}
+    .inp:focus,.txt:focus,.sel:focus{outline:none;border-bottom:2px solid var(--primary);background:#f3edf7}
+    .btn{border-radius:999px;text-transform:uppercase;letter-spacing:0.1px;height:40px;font-weight:500;font-size:14px;padding:0 24px}
+    .btn.primary{box-shadow:0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)}
+    .btn.primary:hover{box-shadow:0 2px 6px rgba(0,0,0,0.16),0 2px 4px rgba(0,0,0,0.32);background:#7c3aed}
+    .btn.icon{width:40px;height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+    .btn.icon .material-icons-outlined{margin:0}
+    .fab{position:absolute;bottom:90px;right:32px;width:56px;height:56px;border-radius:16px;background:var(--primary);color:#fff;border:none;box-shadow:0 3px 5px rgba(0,0,0,0.2),0 6px 10px rgba(0,0,0,0.14);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10}
+    .fab:hover{box-shadow:0 5px 8px rgba(0,0,0,0.24),0 8px 14px rgba(0,0,0,0.18)}
+    .nav{position:relative}
+    .nav.active::before{content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);width:64px;height:28px;background:#e8def8;border-radius:16px;z-index:-1}
+    .nav-item:hover,.btn:hover{background:rgba(98,0,234,0.08)}
+    .material-icons-outlined{font-size:18px;line-height:1;display:inline-flex;align-items:center}
+    .btn .material-icons-outlined{margin-right:6px}
+  </style>
+</head>
+<body>
+  <h1>Team Standup Logger</h1>
+  <div class="subtitle">Android FE wireframes generated from acceptance criteria</div>
+  <div class="wrap">
+    <div class="side">
+      <h3>Screens</h3>
+      <div id="nav">
+        <div class="nav-item" data-screen="dashboard">Dashboard (Today)</div>
+        <div class="nav-item" data-screen="missing">Missing Today</div>
+        <div class="nav-item" data-screen="submit">Submit Standup</div>
+        <div class="nav-item" data-screen="history">History by Date</div>
+        <div class="nav-item" data-screen="export">Export (Markdown)</div>
+        <div class="nav-item" data-screen="roster">Team Roster</div>
+        <div class="nav-item" data-screen="settings">Settings</div>
+      </div>
+    </div>
+
+    <div class="phone">
+      <div class="device" style="position:relative">
+        <div class="status"><span id="net-pill" class="chip">Online</span><span id="clock"></span></div>
+        <div class="header">
+          <div id="header-content"></div>
+        </div>
+        <div class="content" id="screen">
+          <!-- dynamic -->
+        </div>
+        <div class="bottom">
+          <div class="nav" data-screen="dashboard"><span class="material-icons-outlined">dashboard</span><span class="nav-label">Home</span></div>
+          <div class="nav" data-screen="submit"><span class="material-icons-outlined">edit_note</span><span class="nav-label">Submit</span></div>
+          <div class="nav" data-screen="history"><span class="material-icons-outlined">event_note</span><span class="nav-label">History</span></div>
+          <div class="nav" data-screen="settings"><span class="material-icons-outlined">settings</span><span class="nav-label">Settings</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Data model used by the wireframe (mocked) - Updated with dropdown for name field
+    const currentUser = "You";
+    const roster = ["Alex Johnson","Priya Verma","Miguel Santos","Sarah Kim","You"];
+    const todayKey = dateKey(new Date());
+
+    // Standups by date
+    const standups = {
+      [todayKey]: [
+        { id: "s1", name:"Alex Johnson", yesterday:"Reviewed PRs", today:"Finalize API spec", blockers:"None", time:"09:10", editedAt:null },
+        { id: "s2", name:"Priya Verma", yesterday:"Auth flow fixes", today:"Add MFA", blockers:"Waiting on UX", time:"09:25", editedAt:null },
+        { id: "s3", name:"Miguel Santos", yesterday:"Telemetry", today:"Dashboards", blockers:"", time:"09:40", editedAt:null },
+        // Sarah is missing on purpose
+        { id: "me", name:"You", yesterday:"Feature A tests", today:"Implement Feature B", blockers:"", time:"09:55", editedAt:"10:30" }
+      ],
+      [dateKey(addDays(new Date(), -1))]: [
+        { id: "d1", name:"You", yesterday:"Spike on caching", today:"Write doc", blockers:"", time:"10:10", editedAt:null }
+      ]
+    };
+
+    // State
+    let selectedScreen = "dashboard";
+    let selectedDate = new Date();
+
+    // Helpers
+    function dateKey(d){ return d.toISOString().slice(0,10); }
+    function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+    function fmtDate(d){ return d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}); }
+    function isToday(d){ const t=new Date(); return dateKey(t)===dateKey(d); }
+    function nowTime(){ const d=new Date(); return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); }
+
+    function getTodayStatus(){
+      const today = standups[todayKey] || [];
+      const submittedNames = new Set(today.map(s=>s.name));
+      const pending = roster.filter(n=>!submittedNames.has(n));
+      return { submitted: today, pending };
+    }
+
+    // UI builder functions
+    function h(tag, attrs={}, children=[]){
+      const el = document.createElement(tag);
+      for(const [k,v] of Object.entries(attrs)){
+        if(k==="class") el.className=v;
+        else if(k==="text") el.textContent=v;
+        else if(k.startsWith("on")) el.addEventListener(k.slice(2), v);
+        else el.setAttribute(k,v);
+      }
+      for(const c of (Array.isArray(children)?children:[children])){
+        if(typeof c==="string") el.insertAdjacentHTML("beforeend", c);
+        else if(c) el.appendChild(c);
+      }
+      return el;
+    }
+
+    function mi(name){ return h("span", {class:"material-icons-outlined"}, name); }
+
+    // Screens
+    function screenDashboard(){
+      const wrap = h("div");
+      const {submitted, pending} = getTodayStatus();
+      
+      // Hero stat card
+      const statCard = h("div",{style:"background:linear-gradient(135deg,#6200ea,#7c3aed);color:#fff;border-radius:16px;padding:24px;margin-bottom:24px;box-shadow:0 4px 8px rgba(98,0,234,0.3)"},[
+        h("div",{style:"font-size:48px;font-weight:700;margin-bottom:8px"},`${submitted.length}/${roster.length}`),
+        h("div",{style:"font-size:16px;opacity:0.9"},"Standups submitted today"),
+        h("div",{style:"margin-top:16px;font-size:13px;opacity:0.8"},`Last updated ${nowTime()}`)
+      ]);
+      wrap.append(statCard);
+
+      if(pending.length > 0){
+        const pendingBar = h("div",{style:"background:#fff3e0;border-left:4px solid #e65100;padding:16px;border-radius:12px;margin-bottom:16px"},[
+          h("div",{style:"display:flex;align-items:center;margin-bottom:12px"},[
+            h("span",{class:"material-icons-outlined",style:"color:#e65100;font-size:28px;margin-right:12px"},"person_off"),
+            h("div",{style:"flex:1"},[
+              h("div",{style:"font-weight:600;color:#e65100;font-size:16px;margin-bottom:4px"},`${pending.length} team member${pending.length !== 1 ? 's' : ''} missing`),
+              h("div",{style:"font-size:13px;color:#666"},"Haven't submitted standup yet")
+            ])
+          ]),
+          h("button",{class:"btn", style:"background:#e65100;color:#fff;border:none;width:100%", onclick:()=>route('missing')},[mi('visibility'), "View Missing Standups"])
+        ]);
+        wrap.append(pendingBar);
+      }
+
+      if(submitted.length===0){
+        wrap.append(h("div",{style:"text-align:center;padding:48px 24px;color:#999"},[
+          h("div",{style:"font-size:64px;margin-bottom:16px"},"📭"),
+          h("div",{style:"font-size:18px;font-weight:500;margin-bottom:8px;color:#666"},"No standups yet"),
+          h("div",{style:"font-size:14px"},"Be the first to submit today")
+        ]));
+        return wrap;
+      }
+
+      // Submitted section with action buttons
+      const headerRow = h("div",{style:"display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;margin-top:8px"},[
+        h("div",{style:"font-size:22px;font-weight:500;color:#1c1b1f;letter-spacing:-0.5px"},"Today's Standups"),
+        h("button",{class:"btn icon",style:"border-color:#6200ea;color:#6200ea",onclick:()=>route('export'),title:"Export to Markdown"},[mi('download')])
+      ]);
+      wrap.append(headerRow);
+      submitted.forEach(s=>{
+        const item = h("div",{class:"card"},[
+          h("div",{style:"display:flex;align-items:center;margin-bottom:12px"},[
+            h("div",{class:"av", style:"width:40px;height:40px;flex:none"}, s.name.split(" ").map(p=>p[0]).join("").slice(0,2)),
+            h("div",{style:"flex:1;margin-left:12px"},[
+              h("div",{style:"font-weight:500;font-size:16px;margin-bottom:2px"},s.name),
+              h("div",{style:"font-size:13px;color:#666"},`Submitted at ${s.time}`)
+            ])
+          ]),
+          h("div",{style:"margin-bottom:8px"},[
+            h("div",{style:"font-size:12px;color:#666;margin-bottom:4px"},"YESTERDAY"),
+            h("div",{style:"font-size:14px;color:#333"},s.yesterday)
+          ]),
+          h("div",{style:"margin-bottom:8px"},[
+            h("div",{style:"font-size:12px;color:#666;margin-bottom:4px"},"TODAY"),
+            h("div",{style:"font-size:14px;color:#333"},s.today)
+          ]),
+          s.blockers ? h("div",[
+            h("div",{style:"font-size:12px;color:#666;margin-bottom:4px"},"BLOCKERS"),
+            h("div",{style:"font-size:14px;color:#d32f2f"},s.blockers)
+          ]) : null
+        ]);
+        wrap.append(item);
+      });
+
+      // FAB for submit
+      const fab = h("button",{class:"fab", onclick:()=>route('submit'), title:"Submit Standup"},[mi('add')]);
+      wrap.append(fab);
+
+      return wrap;
+    }
+
+    function screenMissing(){
+      const wrap = h("div");
+      const {submitted, pending} = getTodayStatus();
+      
+      wrap.append(
+        h("div",{class:"page-header"},[
+          h("div",{class:"page-title", text:"Missing Today"}),
+          h("div",{class:"page-subtitle", text:`${pending.length} team member${pending.length !== 1 ? 's' : ''} haven't submitted`})
+        ])
+      );
+
+      if(pending.length===0){
+        wrap.append(h("div",{style:"text-align:center;padding:48px 24px"},[
+          h("div",{style:"font-size:64px;margin-bottom:16px"},"🎉"),
+          h("div",{style:"font-size:18px;font-weight:500;margin-bottom:8px;color:#2e7d32"},"All caught up!"),
+          h("div",{style:"font-size:14px;color:#666"},"Everyone has submitted today")
+        ]));
+        return wrap;
+      }
+
+      pending.forEach(n=>{
+        wrap.append(h("div",{class:"card"},[
+          h("div",{style:"display:flex;align-items:center;justify-content:space-between"},[
+            h("div",{style:"display:flex;align-items:center;flex:1"},[
+              h("div",{class:"av", style:"width:48px;height:48px;flex:none"}, n.split(" ").map(p=>p[0]).join("").slice(0,2)),
+              h("div",{style:"margin-left:16px"},[
+                h("div",{style:"font-weight:500;font-size:16px;margin-bottom:4px"},n),
+                h("div",{style:"font-size:13px;color:#e65100"},"Not submitted yet")
+              ])
+            ]),
+            h("button",{class:"btn icon", style:"border-color:#6200ea;color:#6200ea", onclick:()=>alert(`Reminder sent to ${n}`), title:"Send reminder"},[mi('notifications_active')])
+          ])
+        ]));
+      });
+
+      return wrap;
+    }
+
+    function screenSubmit(){
+      const wrap = h("div");
+      
+      wrap.append(
+        h("div",{class:"page-header"},[
+          h("div",{class:"page-title", text:"Submit Standup"}),
+          h("div",{class:"page-subtitle", text:"Share your progress with the team"})
+        ])
+      );
+
+      const form = h("div",{class:"card"});
+      const name = fieldSelect("Name", true, roster, currentUser);
+      const yest = fieldArea("What did you do yesterday?", true, "");
+      const today = fieldArea("What will you do today?", true, "");
+      const blockers = fieldArea("Any blockers? (optional)", false, "");
+
+      const submitBtn = h("button",{class:"btn primary", onclick:trySubmit},[mi('send'), "Submit"]);
+      const cancelBtn = h("button",{class:"btn", onclick:()=>route('dashboard')},[mi('close'), "Cancel"]);
+      
+      form.append(
+        name.el,
+        yest.el,
+        today.el,
+        blockers.el,
+        h("div",{class:"actions"},[submitBtn,cancelBtn])
+      );
+      wrap.append(form);
+
+      function trySubmit(){
+        let ok = true;
+        ok &= name.validate();
+        ok &= yest.validate();
+        ok &= today.validate();
+        if(!ok) return;
+        const ts = nowTime();
+        (standups[todayKey] ||= []).push({
+          id: "n"+Math.random().toString(36).slice(2),
+          name: name.get(),
+          yesterday: yest.get(),
+          today: today.get(),
+          blockers: blockers.get(),
+          time: ts, editedAt: null
+        });
+        route('confirm', {ts});
+      }
+      return wrap;
+    }
+
+    function screenConfirm(params){
+      const wrap = h("div");
+      
+      wrap.append(
+        h("div",{style:"text-align:center;padding:48px 24px 32px"},[
+          h("div",{style:"font-size:72px;margin-bottom:24px"},"✓"),
+          h("div",{class:"page-title", style:"text-align:center;margin-bottom:8px"},"Submitted!"),
+          h("div",{style:"font-size:14px;color:#666"},[
+            "Your standup was submitted at ",
+            h("span",{style:"font-weight:500;color:#1c1b1f"}, params?.ts || nowTime())
+          ])
+        ]),
+        h("div",{class:"card",style:"margin-top:16px"},[
+          h("div",{style:"font-size:14px;color:#666;margin-bottom:16px"},"What would you like to do next?"),
+          h("div",{class:"actions"},[
+            h("button",{class:"btn primary", onclick:()=>route('dashboard')},[mi('dashboard'), "Dashboard"]),
+            h("button",{class:"btn", onclick:()=>route('history')},[mi('event_note'), "View History"])
+          ])
+        ])
+      );
+      return wrap;
+    }
+
+    function screenHistory(){
+      const wrap = h("div");
+      
+      wrap.append(
+        h("div",{class:"page-header"},[
+          h("div",{class:"page-title", text:"Standup History"}),
+          h("div",{class:"page-subtitle", text:"View past submissions"})
+        ])
+      );
+
+      const dateCard = h("div",{class:"card"});
+      const inp = h("input",{type:"date", class:"inp", value:dateKey(selectedDate), max:dateKey(new Date()), onchange:(e)=>{selectedDate=new Date(e.target.value); render();}});
+      const nav = h("div",{style:"display:flex;align-items:center;gap:12px"},[
+        h("button",{class:"btn icon", onclick:()=>{selectedDate=addDays(selectedDate,-1); render();}},[mi('arrow_back')]),
+        h("div",{style:"flex:1;text-align:center;font-weight:500;font-size:16px"}, fmtDate(selectedDate)),
+        h("button",{class:"btn icon", onclick:()=>{ const t=new Date(); const next=addDays(selectedDate,1); if(dateKey(next) <= dateKey(t)){ selectedDate=next; render(); } }},[mi('arrow_forward')])
+      ]);
+      dateCard.append(inp, h("div",{style:"height:12px"}), nav);
+      wrap.append(dateCard);
+
+      const key = dateKey(selectedDate);
+      const rows = standups[key]||[];
+      
+      if(rows.length===0){
+        wrap.append(h("div",{style:"text-align:center;padding:48px 24px"},[
+          h("div",{style:"font-size:48px;margin-bottom:16px"},"📅"),
+          h("div",{style:"font-size:16px;font-weight:500;margin-bottom:8px"},"No standups"),
+          h("div",{style:"font-size:14px;color:#666"},"No submissions for this date")
+        ]));
+        return wrap;
+      }
+
+      rows.forEach(s=>{
+        wrap.append(h("div",{class:"card"},[
+          h("div",{style:"display:flex;align-items:center;margin-bottom:16px"},[
+            h("div",{class:"av", style:"width:40px;height:40px;flex:none"}, s.name.split(" ").map(p=>p[0]).join("").slice(0,2)),
+            h("div",{style:"margin-left:12px;flex:1"},[
+              h("div",{style:"font-weight:500;font-size:15px;margin-bottom:2px"},s.name),
+              h("div",{style:"font-size:12px;color:#666"},`Submitted at ${s.time}`)
+            ])
+          ]),
+          h("div",{style:"margin-bottom:12px"},[
+            h("div",{style:"font-size:12px;color:#666;margin-bottom:4px"},"Yesterday"),
+            h("div",{style:"font-size:14px"},s.yesterday)
+          ]),
+          h("div",{style:"margin-bottom:12px"},[
+            h("div",{style:"font-size:12px;color:#666;margin-bottom:4px"},"Today"),
+            h("div",{style:"font-size:14px"},s.today)
+          ]),
+          h("div",[
+            h("div",{style:"font-size:12px;color:#666;margin-bottom:4px"},"Blockers"),
+            h("div",{style:"font-size:14px;color:"+(s.blockers?"#e65100":"#666")},s.blockers || "None")
+          ])
+        ]));
+      });
+
+      return wrap;
+    }
+
+    function screenExport(){
+      const wrap = h("div");
+      
+      wrap.append(
+        h("div",{class:"page-header"},[
+          h("div",{class:"page-title", text:"Export Standups"}),
+          h("div",{class:"page-subtitle", text:"Download submissions as Markdown"})
+        ])
+      );
+
+      const key = dateKey(selectedDate);
+      const rows = standups[key]||[];
+      const fname = `standup-${key}.md`;
+      
+      const dateCard = h("div",{class:"card"});
+      const inp = h("input",{type:"date", class:"inp", value:dateKey(selectedDate), max:dateKey(new Date()), onchange:(e)=>{selectedDate=new Date(e.target.value); render();}});
+      const exportBtn = h("button",{class:"btn primary", style:"width:100%", onclick:()=>doExport(key, rows, fname)},[mi('download'), "Export to File"]);
+      dateCard.append(
+        h("div",{class:"label", text:"Select date"}),
+        inp,
+        h("div",{style:"height:12px"}),
+        h("div",{style:"font-size:13px;color:#666;margin-bottom:12px"},[
+          "File: ",
+          h("span",{style:"font-weight:500;color:#1c1b1f"}, fname)
+        ]),
+        exportBtn
+      );
+      wrap.append(dateCard);
+
+      if(rows.length===0){
+        wrap.append(h("div",{style:"text-align:center;padding:48px 24px"},[
+          h("div",{style:"font-size:48px;margin-bottom:16px"},"📄"),
+          h("div",{style:"font-size:16px;font-weight:500;margin-bottom:8px"},"No data to export"),
+          h("div",{style:"font-size:14px;color:#666"},"No submissions found for this date")
+        ]));
+      }else{
+        wrap.append(
+          h("div",{class:"card"},[
+            h("div",{style:"display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"},[
+              h("div",{style:"font-weight:500;font-size:15px"},"Preview"),
+              h("div",{style:"font-size:13px;color:#666"},`${rows.length} standup${rows.length !== 1 ? 's' : ''}`)
+            ]),
+            h("pre",{style:"white-space:pre-wrap;font-size:12px;background:#f5f5f5;padding:12px;border-radius:8px;overflow-x:auto"}, mdFor(key, rows))
+          ])
+        );
+      }
+
+      return wrap;
+    }
+
+    function screenEdit(params){
+      const todayRows = standups[todayKey]||[];
+      const my = todayRows.find(s=>s.name===currentUser);
+      const wrap = h("div");
+      
+      if(!my){
+        wrap.append(
+          h("div",{class:"page-header"},[
+            h("div",{class:"page-title", text:"Edit Standup"}),
+            h("div",{class:"page-subtitle", text:"No submission found"})
+          ]),
+          h("div",{style:"text-align:center;padding:48px 24px"},[
+            h("div",{style:"font-size:48px;margin-bottom:16px"},"✏️"),
+            h("div",{style:"font-size:16px;font-weight:500;margin-bottom:8px"},"Nothing to edit"),
+            h("div",{style:"font-size:14px;color:#666;margin-bottom:24px"},"You haven't submitted today"),
+            h("button",{class:"btn primary", onclick:()=>route('submit')},[mi('send'), "Submit Now"])
+          ])
+        );
+        return wrap;
+      }
+
+      wrap.append(
+        h("div",{class:"page-header"},[
+          h("div",{class:"page-title", text:"Edit Standup"}),
+          h("div",{class:"page-subtitle", text:"Update your submission"})
+        ])
+      );
+
+      const form = h("div",{class:"card"});
+      const name = fieldText("Name", true, my.name);
+      const yest = fieldArea("What did you do yesterday?", true, my.yesterday);
+      const today = fieldArea("What will you do today?", true, my.today);
+      const blockers = fieldArea("Any blockers? (optional)", false, my.blockers||"");
+      
+      const metaText = my.editedAt ? `Last edited at ${my.editedAt}` : `Submitted at ${my.time}`;
+
+      const save = h("button",{class:"btn primary", onclick:()=>saveEdit()},[mi('save'), "Save"]);
+      const cancel = h("button",{class:"btn", onclick:()=>route('dashboard')},[mi('close'), "Cancel"]);
+      const del = h("button",{class:"btn warn", onclick:()=>deleteMine()},[mi('delete'), "Delete"]);
+
+      form.append(
+        name.el,
+        yest.el,
+        today.el,
+        blockers.el,
+        h("div",{style:"font-size:12px;color:#666;margin-top:8px"}, metaText),
+        h("div",{class:"actions"},[save,cancel,del])
+      );
+      wrap.append(form);
+
+      function saveEdit(){
+        let ok = true;
+        ok &= yest.validate();
+        ok &= today.validate();
+        if(!ok) return;
+        my.yesterday = yest.get();
+        my.today = today.get();
+        my.blockers = blockers.get();
+        my.editedAt = nowTime();
+        route('history');
+      }
+      function deleteMine(){
+        const idx = todayRows.findIndex(s=>s.id===my.id);
+        if(idx>=0){ todayRows.splice(idx,1); }
+        route('dashboard');
+      }
+      return wrap;
+    }
+
+    function screenRoster(){
+      const wrap = h("div");
+      
+      wrap.append(
+        h("div",{class:"page-header"},[
+          h("div",{class:"page-title", text:"Team Roster"}),
+          h("div",{class:"page-subtitle", text:`${roster.length} team member${roster.length !== 1 ? 's' : ''}`})
+        ])
+      );
+
+      // Add member form
+      wrap.append(h("div",{class:"card"},[
+        h("div",{style:"font-weight:500;font-size:16px;margin-bottom:16px"},"Add New Member"),
+        h("div",{class:"form-group"},[
+          h("label",{class:"form-label"},"Full Name"),
+          h("input",{type:"text",class:"form-input",placeholder:"Enter full name",id:"newMemberName"})
+        ]),
+        h("div",{class:"form-group"},[
+          h("label",{class:"form-label"},"Email"),
+          h("input",{type:"email",class:"form-input",placeholder:"email@company.com",id:"newMemberEmail"})
+        ]),
+        h("button",{class:"btn primary", style:"width:100%", onclick:()=>{
+          const nameInput = document.getElementById("newMemberName");
+          const emailInput = document.getElementById("newMemberEmail");
+          const name = nameInput.value.trim();
+          const email = emailInput.value.trim();
+          if(!name){
+            alert("Please enter a name");
+            return;
+          }
+          if(roster.includes(name)){
+            alert("Member already exists!");
+            return;
+          }
+          roster.push(name);
+          nameInput.value = "";
+          emailInput.value = "";
+          render();
+        }},[mi('person_add'), "Add Team Member"])
+      ]));
+
+      // Team members list
+      if(roster.length === 0){
+        wrap.append(h("div",{style:"text-align:center;padding:48px 24px"},[
+          h("div",{style:"font-size:48px;margin-bottom:16px"},"👥"),
+          h("div",{style:"font-size:16px;font-weight:500;margin-bottom:8px"},"No team members"),
+          h("div",{style:"font-size:14px;color:#666"},"Add your first team member above")
+        ]));
+      }else{
+        wrap.append(h("div",{class:"sec-title", text:"TEAM MEMBERS"}));
+        roster.forEach((name,idx)=>{
+          wrap.append(h("div",{class:"list-item"},[
+            h("div",{class:"list-item-avatar"}, name.split(" ").map(p=>p[0]).join("").slice(0,2)),
+            h("div",{class:"list-item-content"},[
+              h("div",{class:"list-item-title"},name),
+              h("div",{class:"list-item-subtitle"},`Team member ${idx + 1}`)
+            ]),
+            h("button",{class:"btn icon",style:"color:#d32f2f;border-color:#d32f2f",onclick:()=>{
+              if(confirm(`Remove ${name} from team roster?`)){
+                const index = roster.indexOf(name);
+                if(index>=0){ roster.splice(index,1); render(); }
+              }
+            },title:"Remove member"},[mi('delete')])
+          ]));
+        });
+      }
+
+      return wrap;
+    }
+
+    function screenSettings(){
+      const wrap = h("div");
+      
+      wrap.append(
+        h("div",{class:"page-header"},[
+          h("div",{class:"page-title", text:"Settings"}),
+          h("div",{class:"page-subtitle", text:"App preferences"})
+        ])
+      );
+
+      wrap.append(h("div",{class:"card",style:"cursor:pointer",onclick:()=>route('roster')},[
+        h("div",{style:"display:flex;align-items:center"},[
+          h("span",{class:"material-icons-outlined", style:"color:#6200ea;font-size:32px;margin-right:16px"},"group"),
+          h("div",{style:"flex:1"},[
+            h("div",{style:"font-size:16px;font-weight:500;margin-bottom:4px"},"Team Roster"),
+            h("div",{style:"font-size:13px;color:#666"},`Manage ${roster.length} team member${roster.length !== 1 ? 's' : ''}`)  
+          ]),
+          h("span",{class:"material-icons-outlined", style:"color:#666"},"chevron_right")
+        ])
+      ]));
+
+      wrap.append(h("div",{class:"card"},[
+        h("div",{style:"font-weight:500;font-size:15px;margin-bottom:16px"},"Connectivity"),
+        h("div",{style:"display:flex;align-items:center;gap:12px;margin-bottom:8px"},[
+          h("span",{class:"material-icons-outlined", style:"color:#2e7d32"}, navigator.onLine ? "wifi" : "wifi_off"),
+          h("div",{style:"flex:1"},[
+            h("div",{style:"font-size:14px;font-weight:500"}, navigator.onLine ? "Online" : "Offline"),
+            h("div",{style:"font-size:12px;color:#666"}, "Status updates automatically")
+          ])
+        ])
+      ]));
+
+      wrap.append(h("div",{class:"card"},[
+        h("div",{style:"font-weight:500;font-size:15px;margin-bottom:16px"},"Notifications"),
+        h("div",{style:"display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"},[
+          h("div",{style:"flex:1"},[
+            h("div",{style:"font-size:14px;font-weight:500;margin-bottom:2px"},"Push notifications"),
+            h("div",{style:"font-size:12px;color:#666"},"Get reminders and updates")
+          ]),
+          h("input",{type:"checkbox", checked:false, onchange:(e)=>alert(`Push notifications ${e.target.checked?'enabled':'disabled'}`)})
+        ]),
+        h("div",{style:"display:flex;align-items:center;justify-content:space-between"},[
+          h("div",{style:"flex:1"},[
+            h("div",{style:"font-size:14px;font-weight:500;margin-bottom:2px"},"Email notifications"),
+            h("div",{style:"font-size:12px;color:#666"},"Receive daily summaries")
+          ]),
+          h("input",{type:"checkbox", checked:true, onchange:(e)=>alert(`Email notifications ${e.target.checked?'enabled':'disabled'}`)})
+        ])
+      ]));
+
+      return wrap;
+    }
+
+    // UI helpers
+    function chip(text){ return h("div",{class:"chip"}, text); }
+    function fieldSelect(label, required=false, options=[], val=""){
+      const box = h("div",{class:"field"+(required?" req":"")});
+      const select = h("select",{class:"sel"});
+      options.forEach(opt=>{
+        const option = h("option",{value:opt, text:opt});
+        if(opt===val) option.selected = true;
+        select.appendChild(option);
+      });
+      const err = h("div",{class:"err-msg"}, `${label} is required`);
+      box.append(h("div",{class:"label", text:label}),select,err);
+      return {
+        el: box,
+        get:()=>select.value.trim(),
+        validate:()=>{ const ok = !required || select.value.trim().length>0; err.style.display = ok?"none":"block"; return ok; }
+      };
+    }
+    function fieldText(label, required=false, val=""){
+      const box = h("div",{class:"field"+(required?" req":"")});
+      const input = h("input",{class:"inp", value:val, placeholder:label});
+      const err = h("div",{class:"err-msg"}, `${label} is required`);
+      box.append(h("div",{class:"label", text:label}),input,err);
+      return {
+        el: box,
+        get:()=>input.value.trim(),
+        validate:()=>{ const ok = !required || input.value.trim().length>0; err.style.display = ok?"none":"block"; return ok; }
+      };
+    }
+    function fieldArea(label, required=false, val=""){
+      const box = h("div",{class:"field"+(required?" req":"")});
+      const input = h("textarea",{class:"txt", placeholder:label}); input.value = val;
+      const err = h("div",{class:"err-msg"}, `${label} is required`);
+      box.append(h("div",{class:"label", text:label}),input,err);
+      return {
+        el: box,
+        get:()=>input.value.trim(),
+        validate:()=>{ const ok = !required || input.value.trim().length>0; err.style.display = ok?"none":"block"; return ok; }
+      };
+    }
+
+    // Export helpers
+    function mdFor(key, rows){
+      if(rows.length===0){
+        return `# Team Standups - ${key}\n\nNo standups for this date.\n`;
+      }
+      const parts = [`# Team Standups - ${key}\n`];
+      for(const s of rows){
+        parts.push(`## ${s.name} (${s.time})`);
+        parts.push(`- Yesterday: ${s.yesterday}`);
+        parts.push(`- Today: ${s.today}`);
+        parts.push(`- Blockers: ${s.blockers||"None"}`);
+        if(s.editedAt) parts.push(`- Edited: ${s.editedAt}`);
+        parts.push(""); // blank line
+      }
+      return parts.join("\n");
+    }
+    function doExport(key, rows, fname){
+      const md = mdFor(key, rows);
+      const blob = new Blob([md], {type:"text/markdown;charset=utf-8"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = fname;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // Router
+    function route(screen, params){
+      selectedScreen = screen;
+      render(params);
+    }
+
+    // Render
+    function render(params){
+      const screen = document.getElementById("screen");
+      const headerContent = document.getElementById("header-content");
+      document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active", n.dataset.screen===selectedScreen));
+      document.querySelectorAll(".bottom .nav").forEach(n=>n.classList.toggle("active", n.dataset.screen===selectedScreen));
+
+      let node, header;
+      switch(selectedScreen){
+        case "dashboard": 
+          header = h("div",{class:"title", text:"Dashboard"});
+          node = screenDashboard(); 
+          break;
+        case "missing": 
+          header = h("div",{style:"display:flex;align-items:center;width:100%"},[
+            h("button",{class:"back-btn", onclick:()=>route('dashboard')},[mi('arrow_back')]),
+            h("div",{class:"title", text:"Missing Today"})
+          ]);
+          node = screenMissing(); 
+          break;
+        case "submit": 
+          header = h("div",{style:"display:flex;align-items:center;width:100%"},[
+            h("button",{class:"back-btn", onclick:()=>route('dashboard')},[mi('arrow_back')]),
+            h("div",{class:"title", text:"Submit Standup"})
+          ]);
+          node = screenSubmit(); 
+          break;
+        case "confirm": 
+          header = h("div",{class:"title", text:"Submitted"});
+          node = screenConfirm(params); 
+          break;
+        case "history": 
+          header = h("div",{class:"title", text:"History"});
+          node = screenHistory(); 
+          break;
+        case "export": 
+          header = h("div",{style:"display:flex;align-items:center;width:100%"},[
+            h("button",{class:"back-btn", onclick:()=>route('settings')},[mi('arrow_back')]),
+            h("div",{class:"title", text:"Export"})
+          ]);
+          node = screenExport(); 
+          break;
+        case "roster": 
+          header = h("div",{style:"display:flex;align-items:center;width:100%"},[
+            h("button",{class:"back-btn", onclick:()=>route('settings')},[mi('arrow_back')]),
+            h("div",{class:"title", text:"Team Roster"})
+          ]);
+          node = screenRoster(); 
+          break;
+        case "settings": 
+          header = h("div",{class:"title", text:"Settings"});
+          node = screenSettings(); 
+          break;
+        default: 
+          selectedScreen="dashboard"; 
+          header = h("div",{class:"title", text:"Dashboard"});
+          node = screenDashboard();
+      }
+      headerContent.replaceChildren(header);
+      screen.replaceChildren(node);
+    }
+
+    // Global events
+    document.getElementById("nav").addEventListener("click",(e)=>{
+      const it = e.target.closest(".nav-item");
+      if(it){ route(it.dataset.screen); }
+    });
+    document.querySelectorAll(".bottom .nav").forEach(n=>{
+      n.addEventListener("click", ()=>route(n.dataset.screen));
+    });
+
+    // Network/offline indicator
+    const netPill = document.getElementById("net-pill");
+    function updateNet(){ const on = navigator.onLine; netPill.textContent = on?"Online":"Offline"; netPill.style.background = on?"#e8f5e9":"#fdecea"; netPill.style.color = on?"#1b5e20":"#b71c1c"; }
+    window.addEventListener("online", updateNet);
+    window.addEventListener("offline", updateNet);
+    updateNet();
+
+    // Clock
+    function tick(){ document.getElementById("clock").textContent = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); }
+    setInterval(tick, 1000); tick();
+
+    // Init
+    render();
+
+    // Notes:
+    // - Story 1.1: Submit form includes required validation, optional blockers, success confirmation, server timestamp simulated.
+    // - Story 1.2: Dashboard shows today's standups with timestamps; auto-refresh banner; empty state supported.
+    // - Story 1.5: Mobile support reflected in layout; offline detection banner; settings include optional push toggle.
+    // - Story 2.1: History screen includes date picker, prev/next, empty state; defaults to today.
+    // - Story 2.2: Missing screen lists not-submitted members (cross-ref roster), clear status, real-time banner, reminder action.
+    // - Story 2.3: Export creates Markdown with correct filename including date and triggers download.
+    // - Story 2.4: Edit only for user's own standup and only today; pre-populated; shows last edited timestamp.
+  </script>
+</body>
+</html>
