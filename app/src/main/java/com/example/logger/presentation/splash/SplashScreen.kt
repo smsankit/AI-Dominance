@@ -42,7 +42,7 @@ fun SplashScreen(
         Text(
             text = stringResource(id = R.string.splash_title),
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.W500),
-            color = Color(0xFF6200EA),
+            color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.size(12.dp))

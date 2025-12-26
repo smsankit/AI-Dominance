@@ -5,78 +5,85 @@ import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.EventNote
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.stringResource
+import com.example.logger.R
 import com.example.logger.presentation.home.HomeRoute
-import com.example.logger.ui.theme.LoggerTheme
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.logger.presentation.home.HomeViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(
+    onNavigateSubmit: () -> Unit = {},
+    onNavigateHistory: () -> Unit = {},
+    onNavigateSettings: () -> Unit = {}
+) {
     var selectedTab by remember { mutableStateOf(DashboardTab.Home) }
 
     Scaffold(
+        floatingActionButton = {
+            // FAB styled like wireframe: purple, white icon, shadow, rounded 16dp
+            FloatingActionButton(
+                onClick = { onNavigateSubmit() },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(Icons.Outlined.EditNote, contentDescription = stringResource(R.string.submit))
+            }
+        },
         bottomBar = {
             NavigationBar {
                 DashboardTab.entries.forEach { tab ->
                     NavigationBarItem(
                         selected = selectedTab == tab,
-                        onClick = { selectedTab = tab },
-                        icon = { Icon(tab.icon, contentDescription = tab.label) },
-                        label = { Text(tab.label) }
+                        onClick = {
+                            selectedTab = tab
+                            when (tab) {
+                                DashboardTab.Submit -> onNavigateSubmit()
+                                DashboardTab.History -> onNavigateHistory()
+                                DashboardTab.Settings -> onNavigateSettings()
+                                else -> {}
+                            }
+                        },
+                        icon = { Icon(tab.icon, contentDescription = tab.labelResId?.let { stringResource(it) } ?: tab.label) },
+                        label = { Text(tab.labelResId?.let { stringResource(it) } ?: tab.label) }
                     )
                 }
             }
         }
-    ) { padding ->
+    ) { _ ->
         when (selectedTab) {
             DashboardTab.Home -> {
                 val vm: HomeViewModel = hiltViewModel()
                 HomeRoute(viewModel = vm)
             }
-            DashboardTab.Submit -> BlankTab(label = "Submit")
-            DashboardTab.History -> BlankTab(label = "History")
-            DashboardTab.Settings -> BlankTab(label = "Settings")
+            // Other tabs navigate away, show minimal content if still on this screen
+            DashboardTab.Submit -> BlankTab(label = stringResource(R.string.submit))
+            DashboardTab.History -> BlankTab(label = stringResource(R.string.history))
+            DashboardTab.Settings -> BlankTab(label = stringResource(R.string.settings))
         }
     }
 }
 
-private enum class DashboardTab(val label: String, val icon: ImageVector) {
-    Home("Home", Icons.Outlined.Dashboard),
-    Submit("Submit", Icons.Outlined.EditNote),
-    History("History", Icons.Outlined.EventNote),
-    Settings("Setting", Icons.Outlined.Settings);
+private enum class DashboardTab(val label: String, val icon: ImageVector, val labelResId: Int? = null) {
+    Home(label = "Home", icon = Icons.Outlined.Dashboard, labelResId = R.string.home),
+    Submit(label = "Submit", icon = Icons.Outlined.EditNote, labelResId = R.string.submit),
+    History(label = "History", icon = Icons.Outlined.EventNote, labelResId = R.string.history),
+    Settings(label = "Settings", icon = Icons.Outlined.Settings, labelResId = R.string.settings);
 
-    companion object {
-        val entries = values().toList()
-    }
+    companion object { val entries = values().toList() }
 }
 
 @Composable
 private fun BlankTab(label: String) {
-    Text(
-        text = "$label",
-        style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier
-    )
+    Text(text = label, style = MaterialTheme.typography.titleLarge)
 }
-
-@Preview(showBackground = true)
-@Composable
-private fun DashboardPreview() {
-    LoggerTheme { DashboardScreen() }
-}
-

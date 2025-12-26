@@ -4,4 +4,19 @@
     <string name="splash_subtitle">Keep your team in sync with daily updates and track progress effortlessly.</string>
     <string name="splash_get_started">Get Started</string>
     <string name="splash_configure_settings">Configure Settings</string>
+    <string name="home">Home</string>
+    <string name="submit">Submit</string>
+    <string name="history">History</string>
+    <string name="settings">Settings</string>
+
+    <string name="submit_standup_title">Submit Standup</string>
+    <string name="submit_standup_subtitle">Share your progress with the team</string>
+    <string name="name_label">Name</string>
+    <string name="yesterday_label">What did you do yesterday?</string>
+    <string name="today_label">What will you do today?</string>
+    <string name="blockers_label_optional">Any blockers? (optional)</string>
+    <string name="required_fields_missing">Please fill all required fields.</string>
+    <string name="unknown_error">Something went wrong. Please try again.</string>
+    <string name="cancel">Cancel</string>
+    <string name="back">Back</string>
 </resources>

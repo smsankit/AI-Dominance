@@ -12,13 +12,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
+    primary = Primary,
+    onPrimary = OnPrimary,
     secondary = PurpleGrey80,
     tertiary = Pink80
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
+    primary = Primary,
+    onPrimary = OnPrimary,
     secondary = PurpleGrey40,
     tertiary = Pink40
 
@@ -37,7 +39,7 @@ private val LightColorScheme = lightColorScheme(
 fun LoggerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // disable dynamic color to keep wireframe palette
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
