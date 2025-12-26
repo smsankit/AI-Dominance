@@ -18,16 +18,21 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.PersonOff
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -43,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import com.example.logger.domain.model.Standup
 import com.example.logger.ui.theme.LoggerTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeRoute(
     viewModel: HomeViewModel,
@@ -51,13 +57,34 @@ fun HomeRoute(
     onExport: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
-    HomeScreen(
-        state = state,
-        onRetry = { viewModel.load() },
-        onViewMissing = onViewMissing,
-        onSubmit = onSubmit,
-        onExport = onExport,
-    )
+    Scaffold(
+        topBar = {
+            androidx.compose.material3.TopAppBar(
+                title = { Text("Dashboard") },
+                actions = {
+                    IconButton(onClick = { /* TODO: navigate to settings */ }) {
+                        Icon(Icons.Outlined.Settings, contentDescription = "Settings")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF6200EA),
+                    titleContentColor = Color.White,
+                    actionIconContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
+            )
+        }
+    ) { padding ->
+        Box(Modifier.padding(padding)) {
+            HomeScreen(
+                state = state,
+                onRetry = { viewModel.load() },
+                onViewMissing = onViewMissing,
+                onSubmit = onSubmit,
+                onExport = onExport,
+            )
+        }
+    }
 }
 
 @Composable

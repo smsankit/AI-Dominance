@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Logger</string>
+    <string name="splash_title">Daily Standup</string>
+    <string name="splash_subtitle">Keep your team in sync with daily updates and track progress effortlessly.</string>
+    <string name="splash_get_started">Get Started</string>
+    <string name="splash_configure_settings">Configure Settings</string>
 </resources>

@@ -104,13 +104,15 @@
     <div class="side">
       <h3>Screens</h3>
       <div id="nav">
-        <div class="nav-item" data-screen="dashboard">Dashboard (Today)</div>
-        <div class="nav-item" data-screen="missing">Missing Today</div>
-        <div class="nav-item" data-screen="submit">Submit Standup</div>
-        <div class="nav-item" data-screen="history">History by Date</div>
-        <div class="nav-item" data-screen="export">Export (Markdown)</div>
-        <div class="nav-item" data-screen="roster">Team Roster</div>
-        <div class="nav-item" data-screen="settings">Settings</div>
+        <div class="nav-item" data-screen="splash"><span class="material-icons-outlined">waving_hand</span> Splash Screen</div>
+        <div class="nav-item" data-screen="dashboard"><span class="material-icons-outlined">dashboard</span> Dashboard</div>
+        <div class="nav-item" data-screen="empty-dashboard"><span class="material-icons-outlined">inbox</span> Empty Dashboard</div>
+        <div class="nav-item" data-screen="missing"><span class="material-icons-outlined">person_off</span> Missing Today</div>
+        <div class="nav-item" data-screen="submit"><span class="material-icons-outlined">edit_note</span> Submit Standup</div>
+        <div class="nav-item" data-screen="history"><span class="material-icons-outlined">event_note</span> History</div>
+        <div class="nav-item" data-screen="export"><span class="material-icons-outlined">download</span> Export</div>
+        <div class="nav-item" data-screen="roster"><span class="material-icons-outlined">group</span> Team Roster</div>
+        <div class="nav-item" data-screen="settings"><span class="material-icons-outlined">settings</span> Settings</div>
       </div>
     </div>
 
@@ -154,7 +156,7 @@
     };
 
     // State
-    let selectedScreen = "dashboard";
+    let selectedScreen = "splash";
     let selectedDate = new Date();
 
     // Helpers
@@ -190,6 +192,51 @@
     function mi(name){ return h("span", {class:"material-icons-outlined"}, name); }
 
     // Screens
+    function screenSplash(){
+      const wrap = h("div",{style:"display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;text-align:center;padding:24px"});
+      
+      wrap.append(
+        h("div",{style:"font-size:80px;margin-bottom:24px"},"📊"),
+        h("div",{style:"font-size:28px;font-weight:500;margin-bottom:12px;color:#6200ea"},"Daily Standup"),
+        h("div",{style:"font-size:16px;color:#666;margin-bottom:48px;max-width:300px"},"Keep your team in sync with daily updates and track progress effortlessly."),
+        h("div",{class:"actions",style:"max-width:280px;width:100%"},[
+          h("button",{class:"btn primary", onclick:()=>route('dashboard')},[mi('dashboard'), "Get Started"]),
+          h("button",{class:"btn", onclick:()=>route('settings')},[mi('settings'), "Configure Settings"])
+        ])
+      );
+
+      return wrap;
+    }
+
+    function screenEmptyDashboard(){
+      const wrap = h("div");
+      
+      // Hero stat card showing 0/total
+      const statCard = h("div",{style:"background:linear-gradient(135deg,#6200ea,#7c3aed);color:#fff;border-radius:16px;padding:24px;margin-bottom:24px;box-shadow:0 4px 8px rgba(98,0,234,0.3)"},[
+        h("div",{style:"font-size:48px;font-weight:700;margin-bottom:8px"},`0/${roster.length}`),
+        h("div",{style:"font-size:16px;opacity:0.9"},"Standups submitted today"),
+        h("div",{style:"margin-top:16px;font-size:13px;opacity:0.8"},`Last updated ${nowTime()}`)
+      ]);
+      wrap.append(statCard);
+
+      // Empty state
+      wrap.append(h("div",{style:"text-align:center;padding:64px 24px"},[
+        h("div",{style:"font-size:80px;margin-bottom:24px"},"📭"),
+        h("div",{style:"font-size:22px;font-weight:500;margin-bottom:12px;color:#1c1b1f"},"No Standups Yet"),
+        h("div",{style:"font-size:14px;color:#666;margin-bottom:32px;max-width:280px;margin-left:auto;margin-right:auto"},"Start by submitting your first daily standup or add team members."),
+        h("div",{class:"actions",style:"max-width:280px;margin:0 auto"},[
+          h("button",{class:"btn primary", onclick:()=>route('submit')},[mi('edit_note'), "Submit First Standup"]),
+          h("button",{class:"btn", onclick:()=>route('roster')},[mi('group'), "Add Team Members"])
+        ])
+      ]));
+
+      // FAB for submit
+      const fab = h("button",{class:"fab", onclick:()=>route('submit'), title:"Submit Standup"},[mi('add')]);
+      wrap.append(fab);
+
+      return wrap;
+    }
+
     function screenDashboard(){
       const wrap = h("div");
       const {submitted, pending} = getTodayStatus();
@@ -217,10 +264,14 @@
       }
 
       if(submitted.length===0){
-        wrap.append(h("div",{style:"text-align:center;padding:48px 24px;color:#999"},[
-          h("div",{style:"font-size:64px;margin-bottom:16px"},"📭"),
-          h("div",{style:"font-size:18px;font-weight:500;margin-bottom:8px;color:#666"},"No standups yet"),
-          h("div",{style:"font-size:14px"},"Be the first to submit today")
+        wrap.append(h("div",{style:"text-align:center;padding:64px 24px"},[
+          h("div",{style:"font-size:80px;margin-bottom:24px"},"📭"),
+          h("div",{style:"font-size:22px;font-weight:500;margin-bottom:12px;color:#1c1b1f"},"No Standups Yet"),
+          h("div",{style:"font-size:14px;color:#666;margin-bottom:32px;max-width:280px;margin-left:auto;margin-right:auto"},"Start by submitting your first daily standup or add team members."),
+          h("div",{class:"actions",style:"max-width:280px;margin:0 auto"},[
+            h("button",{class:"btn primary", onclick:()=>route('submit')},[mi('edit_note'), "Submit First Standup"]),
+            h("button",{class:"btn", onclick:()=>route('roster')},[mi('group'), "Add Team Members"])
+          ])
         ]));
         return wrap;
       }
@@ -232,11 +283,15 @@
       ]);
       wrap.append(headerRow);
       submitted.forEach(s=>{
-        const item = h("div",{class:"card"},[
+        const hasBlocker = s.blockers && s.blockers.trim() && s.blockers.toLowerCase() !== 'none';
+        const item = h("div",{class:"card",style:hasBlocker?"border-left:4px solid #e65100":""},[
           h("div",{style:"display:flex;align-items:center;margin-bottom:12px"},[
             h("div",{class:"av", style:"width:40px;height:40px;flex:none"}, s.name.split(" ").map(p=>p[0]).join("").slice(0,2)),
             h("div",{style:"flex:1;margin-left:12px"},[
-              h("div",{style:"font-weight:500;font-size:16px;margin-bottom:2px"},s.name),
+              h("div",{style:"font-weight:500;font-size:16px;margin-bottom:2px"},[
+                s.name,
+                hasBlocker ? h("span",{style:"font-size:11px;color:#e65100;background:#fff3e0;padding:2px 8px;border-radius:12px;margin-left:8px"},"⚠ HAS BLOCKER") : null
+              ]),
               h("div",{style:"font-size:13px;color:#666"},`Submitted at ${s.time}`)
             ])
           ]),
@@ -248,9 +303,9 @@
             h("div",{style:"font-size:12px;color:#666;margin-bottom:4px"},"TODAY"),
             h("div",{style:"font-size:14px;color:#333"},s.today)
           ]),
-          s.blockers ? h("div",[
-            h("div",{style:"font-size:12px;color:#666;margin-bottom:4px"},"BLOCKERS"),
-            h("div",{style:"font-size:14px;color:#d32f2f"},s.blockers)
+          hasBlocker ? h("div",{style:"background:#fff3e0;padding:12px;border-radius:8px;border-left:3px solid #e65100"},[
+            h("div",{style:"font-size:12px;color:#e65100;font-weight:600;margin-bottom:4px"},"⚠ BLOCKERS"),
+            h("div",{style:"font-size:14px;color:#1c1b1f"},s.blockers)
           ]) : null
         ]);
         wrap.append(item);
@@ -560,43 +615,12 @@
         ])
       );
 
-      // Add member form
-      wrap.append(h("div",{class:"card"},[
-        h("div",{style:"font-weight:500;font-size:16px;margin-bottom:16px"},"Add New Member"),
-        h("div",{class:"form-group"},[
-          h("label",{class:"form-label"},"Full Name"),
-          h("input",{type:"text",class:"form-input",placeholder:"Enter full name",id:"newMemberName"})
-        ]),
-        h("div",{class:"form-group"},[
-          h("label",{class:"form-label"},"Email"),
-          h("input",{type:"email",class:"form-input",placeholder:"email@company.com",id:"newMemberEmail"})
-        ]),
-        h("button",{class:"btn primary", style:"width:100%", onclick:()=>{
-          const nameInput = document.getElementById("newMemberName");
-          const emailInput = document.getElementById("newMemberEmail");
-          const name = nameInput.value.trim();
-          const email = emailInput.value.trim();
-          if(!name){
-            alert("Please enter a name");
-            return;
-          }
-          if(roster.includes(name)){
-            alert("Member already exists!");
-            return;
-          }
-          roster.push(name);
-          nameInput.value = "";
-          emailInput.value = "";
-          render();
-        }},[mi('person_add'), "Add Team Member"])
-      ]));
-
       // Team members list
       if(roster.length === 0){
         wrap.append(h("div",{style:"text-align:center;padding:48px 24px"},[
           h("div",{style:"font-size:48px;margin-bottom:16px"},"👥"),
           h("div",{style:"font-size:16px;font-weight:500;margin-bottom:8px"},"No team members"),
-          h("div",{style:"font-size:14px;color:#666"},"Add your first team member above")
+          h("div",{style:"font-size:14px;color:#666"},"No team members configured")
         ]));
       }else{
         wrap.append(h("div",{class:"sec-title", text:"TEAM MEMBERS"}));
@@ -606,13 +630,7 @@
             h("div",{class:"list-item-content"},[
               h("div",{class:"list-item-title"},name),
               h("div",{class:"list-item-subtitle"},`Team member ${idx + 1}`)
-            ]),
-            h("button",{class:"btn icon",style:"color:#d32f2f;border-color:#d32f2f",onclick:()=>{
-              if(confirm(`Remove ${name} from team roster?`)){
-                const index = roster.indexOf(name);
-                if(index>=0){ roster.splice(index,1); render(); }
-              }
-            },title:"Remove member"},[mi('delete')])
+            ])
           ]));
         });
       }
@@ -755,6 +773,14 @@
 
       let node, header;
       switch(selectedScreen){
+        case "splash":
+          header = h("div",{class:"title", text:"Welcome"});
+          node = screenSplash();
+          break;
+        case "empty-dashboard":
+          header = h("div",{class:"title", text:"Dashboard"});
+          node = screenEmptyDashboard();
+          break;
         case "dashboard": 
           header = h("div",{class:"title", text:"Dashboard"});
           node = screenDashboard(); 
