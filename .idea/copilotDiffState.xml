@@ -29,39 +29,6 @@
             </PendingDiffInfo>
           </value>
         </entry>
-        <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/LoggerApp.kt">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/example/logger/LoggerApp.kt" />
-              <option name="updatedContent" value="package com.example.logger&#10;&#10;import android.app.Application&#10;import dagger.hilt.android.HiltAndroidApp&#10;&#10;@HiltAndroidApp&#10;class LoggerApp : Application()&#10;" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
-        <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/datastore/PreferencesManager.kt">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/datastore/PreferencesManager.kt" />
-              <option name="originalContent" value="package com.example.logger.core.datastore&#10;&#10;import androidx.datastore.core.DataStore&#10;import androidx.datastore.preferences.core.Preferences&#10;import androidx.datastore.preferences.core.edit&#10;import androidx.datastore.preferences.core.longPreferencesKey&#10;import kotlinx.coroutines.flow.Flow&#10;import kotlinx.coroutines.flow.map&#10;import javax.inject.Inject&#10;import javax.inject.Singleton&#10;&#10;@Singleton&#10;class PreferencesManager @Inject constructor(&#10;    private val dataStore: DataStore&lt;Preferences&gt;&#10;) {&#10;    private object Keys {&#10;        val LAST_OPENED = longPreferencesKey(&quot;last_opened&quot;)&#10;    }&#10;&#10;    val lastOpened: Flow&lt;Long?&gt; = dataStore.data.map { prefs -&gt;&#10;        prefs[Keys.LAST_OPENED]&#10;    }&#10;&#10;    suspend fun setLastOpened(epochMillis: Long) {&#10;        dataStore.edit { prefs -&gt;&#10;            prefs[Keys.LAST_OPENED] = epochMillis&#10;        }&#10;    }&#10;}&#10;&#10;" />
-              <option name="updatedContent" value="package com.example.logger.core.datastore&#10;&#10;import androidx.datastore.core.DataStore&#10;import androidx.datastore.preferences.core.Preferences&#10;import androidx.datastore.preferences.core.edit&#10;import androidx.datastore.preferences.core.longPreferencesKey&#10;import kotlinx.coroutines.flow.Flow&#10;import kotlinx.coroutines.flow.map&#10;import javax.inject.Inject&#10;import javax.inject.Singleton&#10;&#10;@Singleton&#10;class PreferencesManager @Inject constructor(&#10;    private val dataStore: DataStore&lt;Preferences&gt;&#10;) {&#10;    private object Keys {&#10;        val LAST_OPENED = longPreferencesKey(&quot;last_opened&quot;)&#10;    }&#10;&#10;    // Generic get by key&#10;    fun &lt;T&gt; get(key: Preferences.Key&lt;T&gt;): Flow&lt;T?&gt; = dataStore.data.map { prefs -&gt;&#10;        prefs[key]&#10;    }&#10;&#10;    // Generic put by key&#10;    suspend fun &lt;T&gt; put(key: Preferences.Key&lt;T&gt;, value: T) {&#10;        dataStore.edit { prefs -&gt;&#10;            prefs[key] = value&#10;        }&#10;    }&#10;&#10;    // Generic remove by key&#10;    suspend fun &lt;T&gt; remove(key: Preferences.Key&lt;T&gt;) {&#10;        dataStore.edit { prefs -&gt;&#10;            prefs.remove(key)&#10;        }&#10;    }&#10;&#10;    // Clear all preferences&#10;    suspend fun clear() {&#10;        dataStore.edit { prefs -&gt;&#10;            prefs.clear()&#10;        }&#10;    }&#10;&#10;    // Example specific usage maintained&#10;    val lastOpened: Flow&lt;Long?&gt; = get(Keys.LAST_OPENED)&#10;&#10;    suspend fun setLastOpened(epochMillis: Long) {&#10;        put(Keys.LAST_OPENED, epochMillis)&#10;    }&#10;}" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
-        <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/di/AppModule.kt">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/di/AppModule.kt" />
-              <option name="updatedContent" value="package com.example.logger.core.di&#10;&#10;import android.content.Context&#10;import androidx.datastore.core.DataStore&#10;import androidx.datastore.preferences.core.Preferences&#10;import androidx.datastore.preferences.preferencesDataStore&#10;import com.example.logger.core.util.DefaultDispatcherProvider&#10;import com.example.logger.core.util.DispatcherProvider&#10;import dagger.Binds&#10;import dagger.Module&#10;import dagger.Provides&#10;import dagger.hilt.InstallIn&#10;import dagger.hilt.android.qualifiers.ApplicationContext&#10;import dagger.hilt.components.SingletonComponent&#10;import javax.inject.Singleton&#10;&#10;private const val DATASTORE_NAME = &quot;app_settings&quot;&#10;&#10;private val Context.appDataStore by preferencesDataStore(name = DATASTORE_NAME)&#10;&#10;@Module&#10;@InstallIn(SingletonComponent::class)&#10;abstract class AppBindModule {&#10;    @Binds&#10;    @Singleton&#10;    abstract fun bindDispatcherProvider(impl: DefaultDispatcherProvider): DispatcherProvider&#10;}&#10;&#10;@Module&#10;@InstallIn(SingletonComponent::class)&#10;object AppProvideModule {&#10;    @Provides&#10;    @Singleton&#10;    fun providePreferencesDataStore(@ApplicationContext context: Context): DataStore&lt;Preferences&gt; =&#10;        context.appDataStore&#10;}&#10;" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
-        <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/exception/AppException.kt">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/exception/AppException.kt" />
-              <option name="updatedContent" value="package com.example.logger.core.exception&#10;&#10;sealed class AppException(message: String? = null, cause: Throwable? = null) : Exception(message, cause) {&#10;    class Network(message: String? = null, cause: Throwable? = null) : AppException(message, cause)&#10;    class Server(message: String? = null, cause: Throwable? = null) : AppException(message, cause)&#10;    class Parsing(message: String? = null, cause: Throwable? = null) : AppException(message, cause)&#10;    class Unknown(message: String? = null, cause: Throwable? = null) : AppException(message, cause)&#10;}&#10;" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
         <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/navigation/Destinations.kt">
           <value>
             <PendingDiffInfo>
@@ -70,43 +37,11 @@
             </PendingDiffInfo>
           </value>
         </entry>
-        <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/network/MockInterceptor.kt">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/network/MockInterceptor.kt" />
-              <option name="updatedContent" value="package com.example.logger.core.network&#10;&#10;import okhttp3.Interceptor&#10;import okhttp3.MediaType.Companion.toMediaType&#10;import okhttp3.Protocol&#10;import okhttp3.Response&#10;import okhttp3.ResponseBody.Companion.toResponseBody&#10;import javax.inject.Inject&#10;import javax.inject.Singleton&#10;&#10;@Singleton&#10;class MockInterceptor @Inject constructor(): Interceptor {&#10;    override fun intercept(chain: Interceptor.Chain): Response {&#10;        val request = chain.request()&#10;        val path = request.url.encodedPath&#10;        return when {&#10;            path.endsWith(&quot;/standup/today&quot;) -&gt; mockJsonResponse(chain, MockStandupJson.today())&#10;            else -&gt; chain.proceed(request)&#10;        }&#10;    }&#10;&#10;    private fun mockJsonResponse(chain: Interceptor.Chain, body: String): Response {&#10;        return Response.Builder()&#10;            .code(200)&#10;            .request(chain.request())&#10;            .protocol(Protocol.HTTP_1_1)&#10;            .message(&quot;OK&quot;)&#10;            .body(body.toResponseBody(&quot;application/json&quot;.toMediaType()))&#10;            .addHeader(&quot;content-type&quot;, &quot;application/json&quot;)&#10;            .build()&#10;    }&#10;}&#10;" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
-        <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/network/NetworkResult.kt">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/network/NetworkResult.kt" />
-              <option name="updatedContent" value="package com.example.logger.core.network&#10;&#10;sealed class NetworkResult&lt;out T&gt; {&#10;    data class Success&lt;T&gt;(val data: T) : NetworkResult&lt;T&gt;()&#10;    data class Error(&#10;        val message: String? = null,&#10;        val throwable: Throwable? = null,&#10;        val code: Int? = null&#10;    ) : NetworkResult&lt;Nothing&gt;()&#10;}&#10;&#10;inline fun &lt;T, R&gt; NetworkResult&lt;T&gt;.map(transform: (T) -&gt; R): NetworkResult&lt;R&gt; = when (this) {&#10;    is NetworkResult.Success -&gt; NetworkResult.Success(transform(data))&#10;    is NetworkResult.Error -&gt; this&#10;}&#10;" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
         <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/domain/model/Standup.kt">
           <value>
             <PendingDiffInfo>
               <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/example/logger/domain/model/Standup.kt" />
               <option name="updatedContent" value="package com.example.logger.domain.model&#10;&#10;data class Standup(&#10;    val id: String,&#10;    val name: String,&#10;    val yesterday: String,&#10;    val today: String,&#10;    val blockers: String?,&#10;    val time: String,&#10;    val editedAt: String?&#10;)&#10;&#10;data class StandupDay(&#10;    val date: String,&#10;    val roster: List&lt;String&gt;,&#10;    val submissions: List&lt;Standup&gt;&#10;)&#10;" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
-        <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/domain/repository/SampleRepository.kt">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/example/logger/domain/repository/SampleRepository.kt" />
-              <option name="updatedContent" value="package com.example.logger.domain.repository&#10;&#10;import com.example.logger.core.network.NetworkResult&#10;import com.example.logger.domain.model.Sample&#10;import kotlinx.coroutines.flow.Flow&#10;&#10;interface SampleRepository {&#10;    fun getSamples(): Flow&lt;NetworkResult&lt;List&lt;Sample&gt;&gt;&gt;&#10;}&#10;" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
-        <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/domain/usecase/GetSamplesUseCase.kt">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/example/logger/domain/usecase/GetSamplesUseCase.kt" />
-              <option name="updatedContent" value="package com.example.logger.domain.usecase&#10;&#10;import com.example.logger.core.network.NetworkResult&#10;import com.example.logger.domain.model.Sample&#10;import com.example.logger.domain.repository.SampleRepository&#10;import kotlinx.coroutines.flow.Flow&#10;import javax.inject.Inject&#10;&#10;class GetSamplesUseCase @Inject constructor(&#10;    private val repository: SampleRepository&#10;) {&#10;    operator fun invoke(): Flow&lt;NetworkResult&lt;List&lt;Sample&gt;&gt;&gt; = repository.getSamples()&#10;}&#10;" />
             </PendingDiffInfo>
           </value>
         </entry>
@@ -159,15 +94,6 @@
             <PendingDiffInfo>
               <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/example/logger/presentation/splash/ui/SplashScreen.kt" />
               <option name="updatedContent" value="package com.example.logger.presentation.splash.ui&#10;&#10;// ...existing imports...&#10;import androidx.compose.ui.unit.Dp&#10;import androidx.compose.foundation.layout.widthIn&#10;import androidx.compose.foundation.layout.fillMaxWidth&#10;&#10;@Composable&#10;fun SplashScreen(&#10;    onGetStarted: () -&gt; Unit,&#10;    onConfigureSettings: () -&gt; Unit,&#10;) {&#10;    Column(&#10;        // ...existing code...&#10;    ) {&#10;        // ...existing code...&#10;        Spacer(Modifier.size(48.dp))&#10;        Column(&#10;            modifier = Modifier&#10;                .padding(horizontal = 12.dp)&#10;                .widthIn(max = 280.dp)&#10;        ) {&#10;            Button(onClick = onGetStarted, modifier = Modifier.fillMaxWidth()) {&#10;                Icon(Icons.Outlined.Dashboard, contentDescription = null)&#10;                Spacer(Modifier.size(8.dp))&#10;                Text(&quot;Get Started&quot;)&#10;            }&#10;            Spacer(Modifier.size(12.dp))&#10;            Button(onClick = onConfigureSettings, modifier = Modifier.fillMaxWidth()) {&#10;                Icon(Icons.Outlined.Settings, contentDescription = null)&#10;                Spacer(Modifier.size(8.dp))&#10;                Text(&quot;Configure Settings&quot;)&#10;            }&#10;        }&#10;    }&#10;}&#10;&#10;// ...existing code..." />
-            </PendingDiffInfo>
-          </value>
-        </entry>
-        <entry key="$PROJECT_DIR$/build.gradle.kts">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/build.gradle.kts" />
-              <option name="originalContent" value="// Top-level build file where you can add configuration options common to all sub-projects/modules.&#10;plugins {&#10;    alias(libs.plugins.android.application) apply false&#10;    alias(libs.plugins.kotlin.android) apply false&#10;    alias(libs.plugins.kotlin.compose) apply false&#10;}" />
-              <option name="updatedContent" value="// Top-level build file where you can add configuration options common to all sub-projects/modules.&#10;plugins {&#10;    alias(libs.plugins.android.application) apply false&#10;    alias(libs.plugins.kotlin.android) apply false&#10;    alias(libs.plugins.kotlin.compose) apply false&#10;    alias(libs.plugins.kotlin.kapt) apply false&#10;    alias(libs.plugins.hilt.android) apply false&#10;}" />
             </PendingDiffInfo>
           </value>
         </entry>

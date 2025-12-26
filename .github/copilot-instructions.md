@@ -19,6 +19,7 @@ Guidelines:
 - Use `presentation/navigation/` for navigation setup and routes.
 - Use `data/feature_name/` for DTOs, mappers, repository implementations, and data sources.
 - Use `domain/feature_name/` for business models, repository interfaces, and use cases.
+- Models in the `data/remote/dto` should end with `Dto` suffix.
 - Models in the `domain/model` should end with `Data` suffix.
 - Models in the `presentation/feature_name/model/` should end with `UiModel` suffix.
 - Create common components in `presentation/common/` for reuse across features.
