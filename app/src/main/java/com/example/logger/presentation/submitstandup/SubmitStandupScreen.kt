@@ -3,20 +3,34 @@ package com.example.logger.presentation.submitstandup
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.EventNote
+import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.logger.R
-import kotlinx.coroutines.flow.collect
+
+private enum class SubmitTabs(val label: String, val icon: ImageVector) {
+    Home("Home", Icons.Outlined.Dashboard),
+    Submit("Submit", Icons.Outlined.EditNote),
+    History("History", Icons.AutoMirrored.Outlined.EventNote),
+    Settings("Settings", Icons.Outlined.Settings)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubmitStandupScreen(
     viewModel: SubmitStandupViewModel,
-    onSubmitted: () -> Unit,
-    onCancel: () -> Unit
+    onSubmitted: (String) -> Unit,
+    onCancel: () -> Unit,
+    onNavigateHome: () -> Unit,
+    onNavigateSubmit: () -> Unit,
+    onNavigateHistory: () -> Unit,
+    onNavigateSettings: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -25,7 +39,7 @@ fun SubmitStandupScreen(
         viewModel.events.collect { evt ->
             when (evt) {
                 is SubmitStandupUiEvent.ApiError -> snackbarHostState.showSnackbar(evt.message)
-                SubmitStandupUiEvent.Submitted -> { /* no-op here, navigation handled by callback */ }
+                SubmitStandupUiEvent.Submitted -> { /* navigation handled by callback */ }
             }
         }
     }
@@ -34,11 +48,6 @@ fun SubmitStandupScreen(
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.submit_standup_title), color = MaterialTheme.colorScheme.onPrimary) },
-                navigationIcon = {
-                    IconButton(onClick = onCancel) {
-                        Icon(imageVector = Icons.Outlined.ArrowBack, contentDescription = stringResource(R.string.back), tint = MaterialTheme.colorScheme.onPrimary)
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -55,7 +64,6 @@ fun SubmitStandupScreen(
         ) {
             // Page header
             Column {
-                Text(text = stringResource(R.string.submit_standup_title), style = MaterialTheme.typography.headlineMedium)
                 Text(text = stringResource(R.string.submit_standup_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
@@ -76,22 +84,33 @@ fun SubmitStandupScreen(
             // Form card styled per wireframe (tinted surface with shadow)
             ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                 Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Name dropdown (roster)
+                    // Name dropdown using ExposedDropdownMenuBox to ensure proper anchor
                     var expanded by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded }
+                    ) {
                         OutlinedTextField(
                             value = state.name,
-                            onValueChange = { viewModel.onNameChange(it) },
+                            onValueChange = {},
                             label = { Text(stringResource(R.string.name_label)) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            modifier = Modifier
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
+                                .fillMaxWidth(),
                             readOnly = true,
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                            },
                             isError = state.nameError,
-                            supportingText = {
-                                if (state.nameError) Text(stringResource(R.string.required_fields_missing))
-                            }
+                            supportingText = { if (state.nameError) Text(stringResource(R.string.required_fields_missing)) }
                         )
-                        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                            state.roster.forEach { option ->
+
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            val options = if (state.roster.isNotEmpty()) state.roster else emptyList()
+                            options.forEach { option ->
                                 DropdownMenuItem(
                                     text = { Text(option) },
                                     onClick = {
@@ -136,7 +155,7 @@ fun SubmitStandupScreen(
                     )
 
                     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { viewModel.submit { onSubmitted() } }, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth()) {
+                        Button(onClick = { viewModel.submit { ts -> onSubmitted(ts) } }, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth()) {
                             Text(stringResource(R.string.submit))
                         }
                         OutlinedButton(onClick = onCancel, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth()) {

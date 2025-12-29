@@ -19,4 +19,44 @@
     <string name="unknown_error">Something went wrong. Please try again.</string>
     <string name="cancel">Cancel</string>
     <string name="back">Back</string>
+    <string name="submitted_title">Submitted!</string>
+    <string name="submitted_message">Your standup was submitted at %1$s</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="view_history">View History</string>
+    <string name="confirm_next_actions_label">What would you like to do next?</string>
+
+    <string name="history_title">Standup History</string>
+    <string name="history_subtitle">View past submissions</string>
+    <string name="select_date_label">Select date</string>
+    <string name="pick_date">Pick Date</string>
+    <string name="history_empty_title">No standups</string>
+    <string name="history_empty_subtitle">No submissions for this date</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">App preferences</string>
+    <string name="settings_team_roster">Team Roster</string>
+    <string name="settings_manage_team">Manage team members</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_push_label">Push notifications</string>
+    <string name="settings_push_desc">Get reminders and updates</string>
+    <string name="settings_email_label">Email notifications</string>
+    <string name="settings_email_desc">Receive daily summaries</string>
+
+    <!-- Roster -->
+    <string name="roster_title">Team Roster</string>
+    <string name="roster_members_count">%1$d team member%2$s</string>
+    <string name="roster_empty_title">No team members</string>
+    <string name="roster_empty_subtitle">No team members configured</string>
+    <string name="roster_section_label">TEAM MEMBERS</string>
+    <string name="roster_member_subtitle">Team member %1$d</string>
+
+    <!-- Missing -->
+    <string name="missing_title">Missing Standup</string>
+    <string name="missing_header">Missing Today</string>
+    <string name="missing_members_count">%1$d team member%2$s have not submitted</string>
+    <string name="missing_empty_title">All caught up!</string>
+    <string name="missing_empty_subtitle">Everyone has submitted today</string>
+    <string name="missing_row_subtitle">Not submitted yet</string>
+    <string name="remind">Remind</string>
 </resources>

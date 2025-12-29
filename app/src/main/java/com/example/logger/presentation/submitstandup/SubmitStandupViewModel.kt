@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 data class SubmitStandupUiState(
@@ -43,12 +46,21 @@ class SubmitStandupViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
+        // Hardcoded roster per wireframe
+        val defaultRoster = listOf("Alex Johnson","Priya Verma","Miguel Santos","Sarah Kim","You")
+        _uiState.value = _uiState.value.copy(
+            roster = defaultRoster,
+            name = if (_uiState.value.name.isBlank()) "You" else _uiState.value.name
+        )
+        // Optionally merge API roster if present, but keep hardcoded as source of truth for now
         viewModelScope.launch {
             getTodayStandupUseCase().collect { res ->
                 if (res is NetworkResult.Success) {
-                    _uiState.value = _uiState.value.copy(roster = res.data.roster)
-                    if (_uiState.value.name.isBlank() && res.data.roster.isNotEmpty()) {
-                        _uiState.value = _uiState.value.copy(name = res.data.roster.last())
+                    // Merge unique names preserving order: hardcoded first, then any new ones
+                    val merged = (defaultRoster + res.data.roster).distinct()
+                    _uiState.value = _uiState.value.copy(roster = merged)
+                    if (_uiState.value.name.isBlank() && merged.isNotEmpty()) {
+                        _uiState.value = _uiState.value.copy(name = if (merged.contains("You")) "You" else merged.first())
                     }
                 }
             }
@@ -60,7 +72,7 @@ class SubmitStandupViewModel @Inject constructor(
     fun onTodayChange(v: String) { _uiState.value = _uiState.value.copy(today = v, todayError = false) }
     fun onBlockersChange(v: String) { _uiState.value = _uiState.value.copy(blockers = v) }
 
-    fun submit(onSuccess: () -> Unit) {
+    fun submit(onSuccess: (String) -> Unit) {
         val s = _uiState.value
         val nameErr = s.name.isBlank()
         val yErr = s.yesterday.isBlank()
@@ -75,18 +87,10 @@ class SubmitStandupViewModel @Inject constructor(
             return
         }
         _uiState.value = s.copy(isSubmitting = true, error = null)
-        viewModelScope.launch {
-            when (val res = submitUseCase(s.name, s.yesterday, s.today, s.blockers.ifBlank { null })) {
-                is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(isSubmitting = false, submittedAt = System.currentTimeMillis().toString())
-                    _events.send(SubmitStandupUiEvent.Submitted)
-                    onSuccess()
-                }
-                is NetworkResult.Error -> {
-                    _uiState.value = _uiState.value.copy(isSubmitting = false)
-                    _events.send(SubmitStandupUiEvent.ApiError(res.message ?: "unknown_error"))
-                }
-            }
-        }
+        // No API call for now: simulate success and navigate to confirm with timestamp
+        val ts = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+        _uiState.value = _uiState.value.copy(isSubmitting = false, submittedAt = ts)
+        viewModelScope.launch { _events.send(SubmitStandupUiEvent.Submitted) }
+        onSuccess(ts)
     }
 }

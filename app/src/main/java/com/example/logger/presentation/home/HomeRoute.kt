@@ -26,7 +26,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -147,15 +146,6 @@ private fun HomeScreen(
                 }
 
                 item { Spacer(Modifier.height(96.dp)) }
-            }
-
-            FloatingActionButton(
-                onClick = onSubmit,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(24.dp)
-            ) {
-                Icon(Icons.Outlined.Add, contentDescription = "Submit Standup")
             }
         }
     }
