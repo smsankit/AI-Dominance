@@ -4,4 +4,59 @@
     <string name="splash_subtitle">Keep your team in sync with daily updates and track progress effortlessly.</string>
     <string name="splash_get_started">Get Started</string>
     <string name="splash_configure_settings">Configure Settings</string>
+    <string name="home">Home</string>
+    <string name="submit">Submit</string>
+    <string name="history">History</string>
+    <string name="settings">Settings</string>
+
+    <string name="submit_standup_title">Submit Standup</string>
+    <string name="submit_standup_subtitle">Share your progress with the team</string>
+    <string name="name_label">Name</string>
+    <string name="yesterday_label">What did you do yesterday?</string>
+    <string name="today_label">What will you do today?</string>
+    <string name="blockers_label_optional">Any blockers? (optional)</string>
+    <string name="required_fields_missing">Please fill all required fields.</string>
+    <string name="unknown_error">Something went wrong. Please try again.</string>
+    <string name="cancel">Cancel</string>
+    <string name="back">Back</string>
+    <string name="submitted_title">Submitted!</string>
+    <string name="submitted_message">Your standup was submitted at %1$s</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="view_history">View History</string>
+    <string name="confirm_next_actions_label">What would you like to do next?</string>
+
+    <string name="history_title">Standup History</string>
+    <string name="history_subtitle">View past submissions</string>
+    <string name="select_date_label">Select date</string>
+    <string name="pick_date">Pick Date</string>
+    <string name="history_empty_title">No standups</string>
+    <string name="history_empty_subtitle">No submissions for this date</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">App preferences</string>
+    <string name="settings_team_roster">Team Roster</string>
+    <string name="settings_manage_team">Manage team members</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_push_label">Push notifications</string>
+    <string name="settings_push_desc">Get reminders and updates</string>
+    <string name="settings_email_label">Email notifications</string>
+    <string name="settings_email_desc">Receive daily summaries</string>
+
+    <!-- Roster -->
+    <string name="roster_title">Team Roster</string>
+    <string name="roster_members_count">%1$d team member%2$s</string>
+    <string name="roster_empty_title">No team members</string>
+    <string name="roster_empty_subtitle">No team members configured</string>
+    <string name="roster_section_label">TEAM MEMBERS</string>
+    <string name="roster_member_subtitle">Team member %1$d</string>
+
+    <!-- Missing -->
+    <string name="missing_title">Missing Standup</string>
+    <string name="missing_header">Missing Today</string>
+    <string name="missing_members_count">%1$d team member%2$s have not submitted</string>
+    <string name="missing_empty_title">All caught up!</string>
+    <string name="missing_empty_subtitle">Everyone has submitted today</string>
+    <string name="missing_row_subtitle">Not submitted yet</string>
+    <string name="remind">Remind</string>
 </resources>

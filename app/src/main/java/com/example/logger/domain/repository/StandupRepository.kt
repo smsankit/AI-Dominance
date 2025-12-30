@@ -6,5 +6,10 @@ import kotlinx.coroutines.flow.Flow
 
 interface StandupRepository {
     fun getTodayStandup(): Flow<NetworkResult<StandupDay>>
+    suspend fun submitStandup(
+        name: String,
+        yesterday: String,
+        today: String,
+        blockers: String?
+    ): NetworkResult<Unit>
 }
-
