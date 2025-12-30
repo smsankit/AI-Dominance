@@ -59,4 +59,15 @@
     <string name="missing_empty_subtitle">Everyone has submitted today</string>
     <string name="missing_row_subtitle">Not submitted yet</string>
     <string name="remind">Remind</string>
+
+    <!-- Export -->
+    <string name="export_standups_title">Export Standups</string>
+    <string name="export_standups_subtitle">Download submissions as Markdown</string>
+    <string name="export_select_date">Select date</string>
+    <string name="export_file_label">File: %1$s</string>
+    <string name="export_button">Export to File</string>
+    <string name="export_no_data">No data to export</string>
+    <string name="export_no_data_sub">No submissions found for this date</string>
+    <string name="export_preview">Preview</string>
+    <string name="export_count">%1$d standup(s)</string>
 </resources>

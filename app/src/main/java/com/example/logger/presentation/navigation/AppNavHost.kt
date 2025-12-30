@@ -73,7 +73,8 @@ fun AppNavHost() {
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        }
+                        },
+                        onNavigateExport = { navController.navigate(Destinations.EXPORT) }
                     )
                 }
             }
@@ -82,7 +83,10 @@ fun AppNavHost() {
             RootScaffold(navController = navController) { padding ->
                 Box(Modifier.padding(padding)) {
                     val vm: HomeViewModel = hiltViewModel()
-                    HomeRoute(viewModel = vm)
+                    HomeRoute(
+                        viewModel = vm,
+                        onNavigateExport = { navController.navigate(Destinations.EXPORT) }
+                    )
                 }
             }
         }
@@ -173,6 +177,14 @@ fun AppNavHost() {
                 onNavigateBack = { navController.popBackStack() },
                 onSendReminder = { /* TODO: hook reminder send; for now no-op */ }
             )
+        }
+        composable(Destinations.EXPORT) {
+            RootScaffold(navController = navController) { padding ->
+                Box(Modifier.padding(padding)) {
+                    // TODO: Wire up with real data from ViewModel
+                    com.example.logger.presentation.export.ExportScreen()
+                }
+            }
         }
     }
 }

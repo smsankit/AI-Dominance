@@ -12,6 +12,7 @@ object Destinations {
     const val SETTINGS = "settings"
     const val ROSTER = "roster"
     const val MISSING = "missing"
+    const val EXPORT = "export"
 
     fun submitConfirm(ts: String) = "$SUBMIT_CONFIRM_BASE/$ts"
 }

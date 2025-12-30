@@ -20,6 +20,7 @@ fun DashboardScreen(
     onNavigateHistory: () -> Unit = {},
     onNavigateSettings: () -> Unit = {},
     onNavigateMissing: () -> Unit = {},
+    onNavigateExport: () -> Unit = {},
 ) {
     // Body-only Home content, RootScaffold provides FAB and bottom bar
     val vm: HomeViewModel = hiltViewModel()
@@ -27,6 +28,7 @@ fun DashboardScreen(
         viewModel = vm,
         onViewMissing = onNavigateMissing,
         onSubmit = onNavigateSubmit,
-        onExport = { /* TODO: export */ }
+        onExport = onNavigateExport,
+        onNavigateExport = onNavigateExport
     )
 }

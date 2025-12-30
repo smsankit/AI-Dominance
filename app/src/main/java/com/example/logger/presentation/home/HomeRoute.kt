@@ -54,6 +54,7 @@ fun HomeRoute(
     onViewMissing: () -> Unit = {},
     onSubmit: () -> Unit = {},
     onExport: () -> Unit = {},
+    onNavigateExport: () -> Unit = {}, // Add this line
 ) {
     val state by viewModel.uiState.collectAsState()
     Scaffold(
@@ -80,7 +81,7 @@ fun HomeRoute(
                 onRetry = { viewModel.load() },
                 onViewMissing = onViewMissing,
                 onSubmit = onSubmit,
-                onExport = onExport,
+                onExport = onNavigateExport, // Use the new navigation lambda
             )
         }
     }
