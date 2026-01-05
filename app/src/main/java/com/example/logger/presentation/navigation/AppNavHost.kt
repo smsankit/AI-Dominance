@@ -179,12 +179,8 @@ fun AppNavHost() {
             )
         }
         composable(Destinations.EXPORT) {
-            RootScaffold(navController = navController) { padding ->
-                Box(Modifier.padding(padding)) {
-                    // TODO: Wire up with real data from ViewModel
-                    com.example.logger.presentation.export.ExportScreen()
-                }
-            }
+            // Export should not show bottom bar or FAB. Render without RootScaffold.
+            com.example.logger.presentation.export.ExportScreen()
         }
     }
 }

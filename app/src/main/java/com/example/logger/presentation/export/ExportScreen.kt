@@ -1,11 +1,10 @@
 package com.example.logger.presentation.export
 
+import android.app.DatePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material3.*
@@ -13,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,79 +20,27 @@ import androidx.compose.ui.unit.dp
 import com.example.logger.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import android.app.DatePickerDialog
-import androidx.compose.ui.platform.LocalContext
 import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExportScreen(
-    date: String = LocalDate.now().format(DateTimeFormatter.ISO_DATE),
+    modifier: Modifier = Modifier,
+    date: String = "",
     standups: List<ExportStandupUiModel> = emptyList(),
     onDateChange: (String) -> Unit = {},
     onExport: (String) -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val calendar = remember(date) {
-        val localDate = LocalDate.parse(date)
-        Calendar.getInstance().apply {
-            set(Calendar.YEAR, localDate.year)
-            set(Calendar.MONTH, localDate.monthValue - 1)
-            set(Calendar.DAY_OF_MONTH, localDate.dayOfMonth)
-        }
+    // Initialize selected date from param or today using Calendar to avoid java.time API level issues
+    val today = remember {
+        val cal = Calendar.getInstance()
+        String.format(Locale.US, "%04d-%02d-%02d", cal[Calendar.YEAR], cal[Calendar.MONTH] + 1, cal[Calendar.DAY_OF_MONTH])
     }
+    var selectedDate by remember { mutableStateOf(if (date.isNotBlank()) date else today) }
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf(date) }
-    OutlinedTextField(
-        value = selectedDate,
-        onValueChange = {}, // Disable manual editing
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        readOnly = true,
-        trailingIcon = {
-            IconButton(onClick = { showDatePicker = true }) {
-                Icon(Icons.Outlined.CalendarToday, contentDescription = "Select date")
-            }
-        },
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFFE7E0EC),
-            unfocusedContainerColor = Color(0xFFE7E0EC),
-            focusedIndicatorColor = Color(0xFF6200EA),
-            unfocusedIndicatorColor = Color(0xFFE7E0EC)
-        )
-    )
-    if (selectedDate != date) {
-        LaunchedEffect(selectedDate) {
-            onDateChange(selectedDate)
-        }
-    }
-    if (showDatePicker) {
-        val dialog = remember { mutableStateOf<DatePickerDialog?>(null) }
-        DisposableEffect(showDatePicker) {
-            if (showDatePicker) {
-                dialog.value = DatePickerDialog(
-                    context,
-                    { _, year, month, dayOfMonth ->
-                        val picked = LocalDate.of(year, month + 1, dayOfMonth)
-                        selectedDate = picked.format(DateTimeFormatter.ISO_DATE)
-                        showDatePicker = false
-                    },
-                    calendar.get(Calendar.YEAR),
-                    calendar.get(Calendar.MONTH),
-                    calendar.get(Calendar.DAY_OF_MONTH)
-                ).apply {
-                    datePicker.maxDate = System.currentTimeMillis()
-                    setOnCancelListener { showDatePicker = false }
-                    show()
-                }
-            }
-            onDispose {
-                dialog.value?.dismiss()
-                dialog.value = null
-            }
-        }
-    }
+
     Column(
         modifier
             .fillMaxSize()
@@ -103,7 +51,7 @@ fun ExportScreen(
             title = { Text(stringResource(R.string.export_standups_title)) },
             navigationIcon = {
                 IconButton(onClick = { /* TODO: handle back */ }) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -150,24 +98,30 @@ fun ExportScreen(
                         )
                     )
                     if (selectedDate != date) {
-                        LaunchedEffect(selectedDate) {
-                            onDateChange(selectedDate)
-                        }
+                        LaunchedEffect(selectedDate) { onDateChange(selectedDate) }
                     }
                     if (showDatePicker) {
                         val dialog = remember { mutableStateOf<DatePickerDialog?>(null) }
                         DisposableEffect(showDatePicker) {
                             if (showDatePicker) {
+                                val cal = Calendar.getInstance().apply {
+                                    // Try to parse selectedDate simply: yyyy-MM-dd
+                                    val parts = selectedDate.split("-")
+                                    if (parts.size == 3) {
+                                        set(Calendar.YEAR, parts[0].toIntOrNull() ?: this[Calendar.YEAR])
+                                        set(Calendar.MONTH, (parts[1].toIntOrNull()?.minus(1)) ?: this[Calendar.MONTH])
+                                        set(Calendar.DAY_OF_MONTH, parts[2].toIntOrNull() ?: this[Calendar.DAY_OF_MONTH])
+                                    }
+                                }
                                 dialog.value = DatePickerDialog(
                                     context,
                                     { _, year, month, dayOfMonth ->
-                                        val picked = LocalDate.of(year, month + 1, dayOfMonth)
-                                        selectedDate = picked.format(DateTimeFormatter.ISO_DATE)
+                                        selectedDate = String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, dayOfMonth)
                                         showDatePicker = false
                                     },
-                                    calendar.get(Calendar.YEAR),
-                                    calendar.get(Calendar.MONTH),
-                                    calendar.get(Calendar.DAY_OF_MONTH)
+                                    cal[Calendar.YEAR],
+                                    cal[Calendar.MONTH],
+                                    cal[Calendar.DAY_OF_MONTH]
                                 ).apply {
                                     datePicker.maxDate = System.currentTimeMillis()
                                     setOnCancelListener { showDatePicker = false }
@@ -182,13 +136,13 @@ fun ExportScreen(
                     }
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = stringResource(R.string.export_file_label, "standup-$date.md"),
+                        text = stringResource(R.string.export_file_label, "standup-$selectedDate.md"),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF666666)
                     )
                     Spacer(Modifier.height(12.dp))
                     Button(
-                        onClick = { onExport(date) },
+                        onClick = { onExport(selectedDate) },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = standups.isNotEmpty(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EA), contentColor = Color.White)
@@ -227,7 +181,7 @@ fun ExportScreen(
                         }
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            text = standupsToMarkdown(date, standups),
+                            text = standupsToMarkdown(selectedDate, standups),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFF333333),
                             modifier = Modifier.background(Color(0xFFF5F5F5)).padding(12.dp)
