@@ -1,9 +1,11 @@
 package com.example.logger.data.mapper
 
 import com.example.logger.data.remote.dto.StandupDto
+import com.example.logger.data.remote.dto.StandupEntryResponseDto
 import com.example.logger.data.remote.dto.StandupResponseDto
 import com.example.logger.domain.model.Standup
 import com.example.logger.domain.model.StandupDay
+import com.example.logger.domain.model.StandupEntryData
 
 fun StandupDto.toDomain() = Standup(
     id = id,
@@ -21,3 +23,14 @@ fun StandupResponseDto.toDomain() = StandupDay(
     submissions = submissions.map { it.toDomain() }
 )
 
+fun StandupEntryResponseDto.toDomain() = StandupEntryData(
+    id = id,
+    standupDate = standupDate,
+    yesterdayWork = yesterdayWork,
+    todayPlan = todayPlan,
+    blockers = blockers,
+    teamMemberId = teamMemberId,
+    teamId = teamId,
+    createdAt = createdAt,
+    updatedAt = updatedAt
+)

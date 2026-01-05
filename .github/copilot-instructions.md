@@ -17,12 +17,18 @@ Guidelines:
 - Create all composable screens under `presentation/feature_name/` and name should end with `Screen`.
 - ViewModels should be in `presentation/feature_name/` and named with `ViewModel` suffix.
 - Use `presentation/navigation/` for navigation setup and routes.
-- Use `data/feature_name/` for DTOs, mappers, repository implementations, and data sources.
-- Use `domain/feature_name/` for business models, repository interfaces, and use cases.
+- Use `data/mapper/` for mappers.
+- Use `data/remote/api` for remote data sources.
+- Use `data/remote/dto` for remote DTOs.
+- Use `data/repository/` for repository implementations.
+- Use `domain/model/` for business models.
+- Use `domain/repository/` for repository interfaces.
+- Use `domain/usecase/` for use cases.
 - Models in the `data/remote/dto` should end with `Dto` suffix.
 - Models in the `domain/model` should end with `Data` suffix.
 - Models in the `presentation/feature_name/model/` should end with `UiModel` suffix.
 - Create common components in `presentation/common/` for reuse across features.
+- Use `presentation/feature_name/mapper` for mapping between domain models and UI models.
 - Create common  components for Buttons, TextFields, etc.
 - User define colors, typography, and themes in `presentation/theme/`.
 - Any colors used in the app should be defined in the `presentation/theme/Color.kt` files.

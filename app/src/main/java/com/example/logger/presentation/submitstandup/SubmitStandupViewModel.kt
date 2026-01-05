@@ -2,14 +2,15 @@ package com.example.logger.presentation.submitstandup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.logger.core.datastore.PreferencesManager
 import com.example.logger.core.network.NetworkResult
+import com.example.logger.domain.usecase.GetTeamMembersUseCase
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import com.example.logger.domain.usecase.SubmitStandupUseCase
+import com.example.logger.presentation.submitstandup.mapper.SubmitStandupUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -38,7 +39,10 @@ sealed interface SubmitStandupUiEvent {
 @HiltViewModel
 class SubmitStandupViewModel @Inject constructor(
     private val submitUseCase: SubmitStandupUseCase,
-    private val getTodayStandupUseCase: GetTodayStandupUseCase
+    private val getTodayStandupUseCase: GetTodayStandupUseCase,
+    private val preferencesManager: PreferencesManager,
+    private val uiMapper: SubmitStandupUiMapper,
+    private val getTeamMembersUseCase: GetTeamMembersUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SubmitStandupUiState())
     val uiState: StateFlow<SubmitStandupUiState> = _uiState
@@ -46,22 +50,35 @@ class SubmitStandupViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
-        // Hardcoded roster per wireframe
-        val defaultRoster = listOf("Alex Johnson","Priya Verma","Miguel Santos","Sarah Kim","You")
-        _uiState.value = _uiState.value.copy(
-            roster = defaultRoster,
-            name = if (_uiState.value.name.isBlank()) "You" else _uiState.value.name
-        )
-        // Optionally merge API roster if present, but keep hardcoded as source of truth for now
+        // Fetch team members from use case and set roster
+        viewModelScope.launch {
+            getTeamMembersUseCase(1, 1, 20).collect { members ->
+                val names = members.map { it.name }
+                _uiState.value = _uiState.value.copy(
+                    roster = names,
+                    name = if (_uiState.value.name.isBlank() && names.isNotEmpty()) names.first() else _uiState.value.name
+                )
+            }
+        }
+        // Merge API roster if present
         viewModelScope.launch {
             getTodayStandupUseCase().collect { res ->
                 if (res is NetworkResult.Success) {
-                    // Merge unique names preserving order: hardcoded first, then any new ones
-                    val merged = (defaultRoster + res.data.roster).distinct()
+                    val merged = (_uiState.value.roster + res.data.roster).distinct()
                     _uiState.value = _uiState.value.copy(roster = merged)
                     if (_uiState.value.name.isBlank() && merged.isNotEmpty()) {
-                        _uiState.value = _uiState.value.copy(name = if (merged.contains("You")) "You" else merged.first())
+                        _uiState.value = _uiState.value.copy(name = merged.first())
                     }
+                }
+            }
+        }
+        // Merge cached team members from preferences if available
+        viewModelScope.launch {
+            preferencesManager.getTeamMembers().collectLatest { members ->
+                if (members.isNotEmpty()) {
+                    val names = members.map { it.name }
+                    val merged = (_uiState.value.roster + names).distinct()
+                    _uiState.value = _uiState.value.copy(roster = merged)
                 }
             }
         }
@@ -87,10 +104,32 @@ class SubmitStandupViewModel @Inject constructor(
             return
         }
         _uiState.value = s.copy(isSubmitting = true, error = null)
-        // No API call for now: simulate success and navigate to confirm with timestamp
-        val ts = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-        _uiState.value = _uiState.value.copy(isSubmitting = false, submittedAt = ts)
-        viewModelScope.launch { _events.send(SubmitStandupUiEvent.Submitted) }
-        onSuccess(ts)
+
+        viewModelScope.launch {
+            // Resolve team member id from cached preferences by name
+            val sNow = _uiState.value
+            val list = preferencesManager.getTeamMembers().first()
+            val teamMemberId = list.firstOrNull { it.name == sNow.name }?.id ?: 0
+            val standupDate = try { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) } catch (_: Throwable) { "" }
+            val request = uiMapper.toRequest(
+                state = sNow,
+                standupDate = standupDate,
+                teamMemberId = teamMemberId,
+                teamId = 1L
+            )
+            val result = submitUseCase(request)
+            when (result) {
+                is NetworkResult.Success -> {
+                    val ts = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+                    _uiState.value = _uiState.value.copy(isSubmitting = false, submittedAt = ts)
+                    _events.send(SubmitStandupUiEvent.Submitted)
+                    onSuccess(ts)
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(isSubmitting = false, error = result.message ?: "Submission failed")
+                    _events.send(SubmitStandupUiEvent.ApiError(_uiState.value.error ?: "Submission failed"))
+                }
+            }
+        }
     }
 }

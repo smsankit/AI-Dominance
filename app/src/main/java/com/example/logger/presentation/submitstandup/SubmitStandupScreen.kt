@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.logger.R
 
@@ -172,4 +173,24 @@ fun SubmitStandupScreen(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SubmitStandupScreenPreview() {
+    val fakeViewModel = object : SubmitStandupViewModel(
+        submitUseCase = TODO(),
+        getTodayStandupUseCase = TODO(),
+        preferencesManager = TODO(),
+        uiMapper = TODO()
+    ) {}
+    SubmitStandupScreen(
+        viewModel = fakeViewModel,
+        onSubmitted = {},
+        onCancel = {},
+        onNavigateHome = {},
+        onNavigateSubmit = {},
+        onNavigateHistory = {},
+        onNavigateSettings = {}
+    )
 }

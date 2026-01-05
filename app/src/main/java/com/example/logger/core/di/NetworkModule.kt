@@ -1,6 +1,7 @@
 package com.example.logger.core.di
 
 import com.example.logger.data.remote.api.LoggerApi
+import com.example.logger.data.remote.api.TeamApiService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -62,4 +63,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideLoggerApi(retrofit: Retrofit): LoggerApi = retrofit.create(LoggerApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTeamApiService(retrofit: Retrofit): TeamApiService = retrofit.create(TeamApiService::class.java)
 }

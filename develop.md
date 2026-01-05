@@ -1,7 +1,7 @@
 # Development Documentation
 
 ## Copilot Usage Summary
-- Total interactions: 26
+- Total interactions: 31
 - Most valuable use: Fixing build errors by updating AGP and compileSdk versions, and guiding architecture and UI changes per wireframe and project standards.
 - Least valuable use: Repeated requests for continuation and preview without actionable context.
 
@@ -164,3 +164,53 @@ Add AGENT.md file.
 **Action:** Accepted
 **Reasoning:** Required for project documentation and traceability.
 
+
+### Interaction 25
+Feature: GetTeamMember
+**Prompt/Context:** Integrate endpoint /standups/teams/{teamId}/members in HomeViewModel; update data/domain/presentation; cache in shared preferences.
+**Suggestion:** Added DTOs, TeamApiService, TeamRepositoryImpl, domain models, use case; extended PreferencesManager to save/get team members as JSON; updated HomeViewModel to fetch and save.
+**Action:** Accepted
+**Reasoning:** Implements feature end-to-end per clean architecture.
+
+### Interaction 26
+Feature: GetTeamMember
+**Prompt/Context:** cache in GetTeamMembersUseCase and only call API when empty?
+**Suggestion:** Implemented use case to check PreferencesManager cache first; if empty, fetch from repository, save, and emit.
+**Action:** Accepted
+**Reasoning:** Encapsulates caching in domain layer; reduces network calls.
+
+### Interaction 27
+Feature: GetTeamMember
+**Prompt/Context:** Call GetTeamMembersUseCase on page load.
+**Suggestion:** Invoked use case in HomeViewModel init, collecting results.
+**Action:** Accepted
+**Reasoning:** Ensures members are available early and cached.
+
+### Interaction 28
+Feature: GetTeamMember
+**Prompt/Context:** Create and use Mapper instead of direct conversion.
+**Suggestion:** Introduced TeamMemberDtoMapper in data/mapper and used it in TeamRepositoryImpl.
+**Action:** Accepted
+**Reasoning:** Centralizes mapping; improves testability.
+
+
+### Interaction 29
+Feature: SubmitStandup
+**Prompt/Context:** Update SubmitStandupUseCase and related classes to new endpoint /standup-entries with given request/response.
+**Suggestion:** Added request/response DTOs, domain model StandupEntryData, mapper; updated LoggerApi and StandupRepository/Impl; wired SubmitStandupViewModel to call use case and handle result.
+**Action:** Accepted
+**Reasoning:** Matches backend contract and returns created entry.
+
+### Interaction 30
+Feature: SubmitStandup
+**Prompt/Context:** Use StandupEntryRequestData in submitStandupEntry() and update related classes.
+**Suggestion:** Changed StandupRepository contract and StandupRepositoryImpl to accept the request model and map to API DTO.
+**Action:** Accepted
+**Reasoning:** Keeps model consistent across layers.
+
+### Interaction 31
+Feature: SubmitStandup
+**Prompt/Context:** Move inline request-building code into a mapper.
+**Suggestion:** Created SubmitStandupUiMapper in presentation layer and used it in SubmitStandupViewModel instead of inline construction.
+**Action:** Accepted
+**Reasoning:** Keeps ViewModel lean; improves reusability and testability.

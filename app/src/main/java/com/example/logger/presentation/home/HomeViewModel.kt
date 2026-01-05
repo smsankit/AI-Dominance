@@ -3,9 +3,9 @@ package com.example.logger.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.network.NetworkResult
+import com.example.logger.domain.usecase.GetTeamMembersUseCase
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -13,10 +13,12 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val getTodayStandup: GetTodayStandupUseCase
+    private val getTodayStandup: GetTodayStandupUseCase,
+    private val getTeamMembers: GetTeamMembersUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
@@ -24,6 +26,13 @@ class HomeViewModel @Inject constructor(
 
     init {
         load()
+        fetchTeamMembers()
+    }
+
+    private fun fetchTeamMembers() {
+        viewModelScope.launch {
+            getTeamMembers(1, 1, 20).collect { /* No-op or update state if needed */ }
+        }
     }
 
     fun load() {
@@ -47,7 +56,13 @@ class HomeViewModel @Inject constructor(
                             )
                         }
                     }
-                    is NetworkResult.Error -> _uiState.update { it.copy(isLoading = false, error = result.message ?: "Unknown error") }
+
+                    is NetworkResult.Error -> _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = result.message ?: "Unknown error"
+                        )
+                    }
                 }
             }
         }

@@ -4,6 +4,10 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import com.example.logger.domain.model.TeamMemberData
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -15,7 +19,10 @@ class PreferencesManager @Inject constructor(
 ) {
     private object Keys {
         val LAST_OPENED = longPreferencesKey("last_opened")
+        val TEAM_MEMBERS = stringPreferencesKey("team_members")
     }
+
+    private val gson = Gson()
 
     // Generic get by key
     fun <T> get(key: Preferences.Key<T>): Flow<T?> = dataStore.data.map { prefs ->
@@ -48,5 +55,16 @@ class PreferencesManager @Inject constructor(
 
     suspend fun setLastOpened(epochMillis: Long) {
         put(Keys.LAST_OPENED, epochMillis)
+    }
+
+    // Store a list of team members as JSON
+    suspend fun saveTeamMembers(members: List<TeamMemberData>) {
+        val json = gson.toJson(members)
+        put(Keys.TEAM_MEMBERS, json)
+    }
+
+    // Retrieve a list of team members from JSON
+    fun getTeamMembers(): Flow<List<TeamMemberData>> = get(Keys.TEAM_MEMBERS).map { json ->
+        if (json.isNullOrEmpty()) emptyList() else gson.fromJson(json, object : TypeToken<List<TeamMemberData>>() {}.type)
     }
 }
