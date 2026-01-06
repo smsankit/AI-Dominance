@@ -33,7 +33,7 @@ class HomeViewModel @Inject constructor(
 
     private fun fetchTeamMembers() {
         viewModelScope.launch {
-            getTeamMembers(1, 1, 20).collect { /* No-op or update state if needed */ }
+            getTeamMembers(1, 0, 20).collect { /* No-op or update state if needed */ }
         }
     }
 
