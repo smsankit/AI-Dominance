@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.datastore.PreferencesManager
 import com.example.logger.core.network.NetworkResult
+import com.example.logger.core.network.map
 import com.example.logger.domain.usecase.GetTeamMembersUseCase
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import com.example.logger.domain.usecase.SubmitStandupUseCase
@@ -50,14 +51,22 @@ class SubmitStandupViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
-        // Fetch team members from use case and set roster
+        // Fetch team members via use case returning NetworkResult and set roster
         viewModelScope.launch {
-            getTeamMembersUseCase(1, 1, 20).collect { members ->
-                val names = members.map { it.name }
-                _uiState.value = _uiState.value.copy(
-                    roster = names,
-                    name = if (_uiState.value.name.isBlank() && names.isNotEmpty()) names.first() else _uiState.value.name
-                )
+            getTeamMembersUseCase(1, 1, 20).collect { result ->
+                when (result) {
+                    is com.example.logger.core.network.NetworkResult.Success -> {
+                        val names = result.data.map { it.name }
+                        _uiState.value = _uiState.value.copy(
+                            roster = names,
+                            name = if (_uiState.value.name.isBlank() && names.isNotEmpty()) names.first() else _uiState.value.name
+                        )
+                    }
+                    is com.example.logger.core.network.NetworkResult.Error -> {
+                        // Keep existing roster, optionally set error message
+                        _uiState.value = _uiState.value.copy(error = result.message)
+                    }
+                }
             }
         }
         // Merge API roster if present

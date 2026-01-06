@@ -1,5 +1,7 @@
 package com.example.logger.data.repository
 
+import com.example.logger.core.network.NetworkResult
+import com.example.logger.core.network.safeNetworkCall
 import com.example.logger.data.mapper.TeamMemberDtoMapper
 import com.example.logger.data.remote.api.TeamApiService
 import com.example.logger.domain.model.TeamMemberData
@@ -12,10 +14,15 @@ class TeamRepositoryImpl @Inject constructor(
     private val api: TeamApiService,
     private val teamMemberDtoMapper: TeamMemberDtoMapper
 ) : TeamRepository {
-    override fun getTeamMembers(teamId: Long, page: Int, size: Int): Flow<List<TeamMemberData>> =
+    override fun getTeamMembers(teamId: Long, page: Int, size: Int): Flow<NetworkResult<List<TeamMemberData>>> =
         flow {
-            val response = api.getTeamMembers(teamId, page, size)
-            val members = response.items.map { teamMemberDtoMapper.map(it) }
-            emit(members)
+            val result = safeNetworkCall { api.getTeamMembers(teamId, page, size) }
+            when (result) {
+                is NetworkResult.Success -> {
+                    val members = result.data.items.map { teamMemberDtoMapper.map(it) }
+                    emit(NetworkResult.Success(members))
+                }
+                is NetworkResult.Error -> emit(result)
+            }
         }
 }

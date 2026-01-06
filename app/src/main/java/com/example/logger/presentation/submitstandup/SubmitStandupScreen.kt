@@ -175,22 +175,3 @@ fun SubmitStandupScreen(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun SubmitStandupScreenPreview() {
-    val fakeViewModel = object : SubmitStandupViewModel(
-        submitUseCase = TODO(),
-        getTodayStandupUseCase = TODO(),
-        preferencesManager = TODO(),
-        uiMapper = TODO()
-    ) {}
-    SubmitStandupScreen(
-        viewModel = fakeViewModel,
-        onSubmitted = {},
-        onCancel = {},
-        onNavigateHome = {},
-        onNavigateSubmit = {},
-        onNavigateHistory = {},
-        onNavigateSettings = {}
-    )
-}
