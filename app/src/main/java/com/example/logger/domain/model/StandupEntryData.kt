@@ -8,7 +8,7 @@ data class StandupEntryData(
     val blockers: String?,
     val teamMemberId: Long,
     val teamId: Long,
-    val createdAt: String,
-    val updatedAt: String
+    val createdAt: String = "",
+    val updatedAt: String = ""
 )
 

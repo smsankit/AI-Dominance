@@ -6,7 +6,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TeamApiService {
-    @GET("standups/teams/{teamId}/members")
+    @GET("standuploggerservices/teams/{teamId}/members")
     suspend fun getTeamMembers(
         @Path("teamId") teamId: Long,
         @Query("page") page: Int,

@@ -26,6 +26,6 @@ interface LoggerApi {
         @Query("standupDate") standupDate: String? = null
     ): PaginatedStandupEntriesDto
 
-    @POST("standup-entries")
+    @POST("standuploggerservices/teams/1/members/standups")
     suspend fun submitStandupEntry(@Body body: SubmitStandupEntryRequestDto): StandupEntryResponseDto
 }

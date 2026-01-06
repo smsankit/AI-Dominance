@@ -2,11 +2,7 @@ package com.example.logger.presentation.submitstandup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.logger.core.datastore.PreferencesManager
 import com.example.logger.core.network.NetworkResult
-import com.example.logger.core.network.map
-import com.example.logger.domain.usecase.GetTeamMembersUseCase
-import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import com.example.logger.domain.usecase.SubmitStandupUseCase
 import com.example.logger.presentation.submitstandup.mapper.SubmitStandupUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +15,7 @@ import java.util.Locale
 import javax.inject.Inject
 
 data class SubmitStandupUiState(
-    val name: String = "",
+    val name: String = "Ankit",
     val yesterday: String = "",
     val today: String = "",
     val blockers: String = "",
@@ -40,10 +36,7 @@ sealed interface SubmitStandupUiEvent {
 @HiltViewModel
 class SubmitStandupViewModel @Inject constructor(
     private val submitUseCase: SubmitStandupUseCase,
-    private val getTodayStandupUseCase: GetTodayStandupUseCase,
-    private val preferencesManager: PreferencesManager,
-    private val uiMapper: SubmitStandupUiMapper,
-    private val getTeamMembersUseCase: GetTeamMembersUseCase
+    private val uiMapper: SubmitStandupUiMapper
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SubmitStandupUiState())
     val uiState: StateFlow<SubmitStandupUiState> = _uiState
@@ -52,45 +45,29 @@ class SubmitStandupViewModel @Inject constructor(
 
     init {
         // Fetch team members via use case returning NetworkResult and set roster
-        viewModelScope.launch {
-            getTeamMembersUseCase(1, 1, 20).collect { result ->
-                when (result) {
-                    is com.example.logger.core.network.NetworkResult.Success -> {
-                        val names = result.data.map { it.name }
-                        _uiState.value = _uiState.value.copy(
-                            roster = names,
-                            name = if (_uiState.value.name.isBlank() && names.isNotEmpty()) names.first() else _uiState.value.name
+        _uiState.value = _uiState.value.copy(
+                            roster = listOf<String>("Ankit Kumar", "Ashokkumar R", "Anurag", "Paras"),
+                            name = "Ashokkumar R"
                         )
-                    }
-                    is com.example.logger.core.network.NetworkResult.Error -> {
-                        // Keep existing roster, optionally set error message
-                        _uiState.value = _uiState.value.copy(error = result.message)
-                    }
-                }
-            }
-        }
-        // Merge API roster if present
-        viewModelScope.launch {
-            getTodayStandupUseCase().collect { res ->
-                if (res is NetworkResult.Success) {
-                    val merged = (_uiState.value.roster + res.data.roster).distinct()
-                    _uiState.value = _uiState.value.copy(roster = merged)
-                    if (_uiState.value.name.isBlank() && merged.isNotEmpty()) {
-                        _uiState.value = _uiState.value.copy(name = merged.first())
-                    }
-                }
-            }
-        }
-        // Merge cached team members from preferences if available
-        viewModelScope.launch {
-            preferencesManager.getTeamMembers().collectLatest { members ->
-                if (members.isNotEmpty()) {
-                    val names = members.map { it.name }
-                    val merged = (_uiState.value.roster + names).distinct()
-                    _uiState.value = _uiState.value.copy(roster = merged)
-                }
-            }
-        }
+
+//        viewModelScope.launch {
+//            getTeamMembersUseCase(1, 1, 20).collect { result ->
+//                when (result) {
+//                    is com.example.logger.core.network.NetworkResult.Success -> {
+//                        val names = result.data.map { it.name }
+//                        _uiState.value = _uiState.value.copy(
+//                            roster = names,
+//                            name = if (_uiState.value.name.isBlank() && names.isNotEmpty()) names.first() else _uiState.value.name
+//                        )
+//                    }
+//                    is com.example.logger.core.network.NetworkResult.Error -> {
+//                        // Keep existing roster, optionally set error message
+//                        _uiState.value = _uiState.value.copy(error = result.message)
+//                    }
+//                }
+//            }
+//        }
+
     }
 
     fun onNameChange(v: String) { _uiState.value = _uiState.value.copy(name = v, nameError = false) }
@@ -117,8 +94,9 @@ class SubmitStandupViewModel @Inject constructor(
         viewModelScope.launch {
             // Resolve team member id from cached preferences by name
             val sNow = _uiState.value
-            val list = preferencesManager.getTeamMembers().first()
-            val teamMemberId = list.firstOrNull { it.name == sNow.name }?.id ?: 0
+//            val list = preferencesManager.getTeamMembers().first()
+//            val teamMemberId = list.firstOrNull { it.name == sNow.name }?.id ?: 0
+            val teamMemberId = 4L
             val standupDate = try { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) } catch (_: Throwable) { "" }
             val request = uiMapper.toRequest(
                 state = sNow,
@@ -130,7 +108,18 @@ class SubmitStandupViewModel @Inject constructor(
             when (result) {
                 is NetworkResult.Success -> {
                     val ts = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-                    _uiState.value = _uiState.value.copy(isSubmitting = false, submittedAt = ts)
+                    _uiState.value = _uiState.value.copy(
+                        isSubmitting = false,
+                        submittedAt = ts,
+                        name = _uiState.value.roster.firstOrNull() ?: "",
+                        yesterday = "",
+                        today = "",
+                        blockers = "",
+                        nameError = false,
+                        yesterdayError = false,
+                        todayError = false,
+                        error = null
+                    )
                     _events.send(SubmitStandupUiEvent.Submitted)
                     onSuccess(ts)
                 }
