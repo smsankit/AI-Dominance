@@ -4,6 +4,7 @@ import com.example.logger.core.network.NetworkResult
 import com.example.logger.data.mapper.toDomain
 import com.example.logger.data.remote.api.LoggerApi
 import com.example.logger.data.remote.dto.SubmitStandupEntryRequestDto
+import com.example.logger.domain.model.PaginatedStandupEntriesData
 import com.example.logger.domain.model.StandupDay
 import com.example.logger.domain.model.StandupEntryData
 import com.example.logger.domain.model.StandupEntryRequestData
@@ -37,6 +38,27 @@ class StandupRepositoryImpl @Inject constructor(
                     teamMemberId = request.teamMemberId,
                     teamId = request.teamId
                 )
+            )
+            NetworkResult.Success(response.toDomain())
+        } catch (e: Exception) {
+            NetworkResult.Error(message = e.message, throwable = e)
+        }
+    }
+
+    override suspend fun getStandupEntries(
+        page: Int?,
+        size: Int?,
+        teamId: Long?,
+        teamMemberId: Long?,
+        standupDate: String?
+    ): NetworkResult<PaginatedStandupEntriesData> {
+        return try {
+            val response = api.getStandupEntries(
+                page = page,
+                size = size,
+                teamId = teamId,
+                teamMemberId = teamMemberId,
+                standupDate = standupDate
             )
             NetworkResult.Success(response.toDomain())
         } catch (e: Exception) {

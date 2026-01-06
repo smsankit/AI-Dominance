@@ -24,6 +24,8 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
     val uiState: StateFlow<HomeUiState> = _uiState
 
+    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
     init {
         load()
         fetchTeamMembers()
@@ -38,31 +40,42 @@ class HomeViewModel @Inject constructor(
     fun load() {
         _uiState.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
-            getTodayStandup().collect { result ->
-                when (result) {
-                    is NetworkResult.Success -> {
-                        val day = result.data
-                        val submittedNames = day.submissions.map { it.name }.toSet()
-                        val pending = day.roster.filterNot { it in submittedNames }
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                error = null,
-                                date = day.date,
-                                roster = day.roster,
-                                submissions = day.submissions,
-                                pending = pending,
-                                lastUpdated = nowTime()
-                            )
-                        }
-                    }
+            // Get today's date in yyyy-MM-dd format
+            val todayDate = dateFormatter.format(Date())
 
-                    is NetworkResult.Error -> _uiState.update {
+            val result = getTodayStandup(
+                page = 0,
+                size = 20,
+                standupDate = todayDate
+            )
+
+            when (result) {
+                is NetworkResult.Success -> {
+                    val data = result.data
+                    // For now, we'll need to handle the roster differently
+                    // as the new API returns entries, not the full roster
+                    val submittedIds = data.items.map { it.teamMemberId }.toSet()
+
+                    _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = result.message ?: "Unknown error"
+                            error = null,
+                            date = todayDate,
+                            roster = emptyList(), // Will need to fetch roster separately if needed
+                            submissions = emptyList(), // Converting StandupEntryData to Standup if needed
+                            pending = emptyList(),
+                            lastUpdated = nowTime(),
+                            standupEntries = data.items,
+                            totalEntries = data.meta.total
                         )
                     }
+                }
+
+                is NetworkResult.Error -> _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = result.message ?: "Unknown error"
+                    )
                 }
             }
         }

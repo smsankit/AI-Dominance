@@ -1,8 +1,13 @@
 package com.example.logger.data.mapper
 
+import com.example.logger.data.remote.dto.PaginatedStandupEntriesDto
+import com.example.logger.data.remote.dto.PaginationMetaDto
 import com.example.logger.data.remote.dto.StandupDto
+import com.example.logger.data.remote.dto.StandupEntryDto
 import com.example.logger.data.remote.dto.StandupEntryResponseDto
 import com.example.logger.data.remote.dto.StandupResponseDto
+import com.example.logger.domain.model.PaginatedStandupEntriesData
+import com.example.logger.domain.model.PaginationMetaData
 import com.example.logger.domain.model.Standup
 import com.example.logger.domain.model.StandupDay
 import com.example.logger.domain.model.StandupEntryData
@@ -34,3 +39,27 @@ fun StandupEntryResponseDto.toDomain() = StandupEntryData(
     createdAt = createdAt,
     updatedAt = updatedAt
 )
+
+fun StandupEntryDto.toDomain() = StandupEntryData(
+    id = id,
+    standupDate = standupDate,
+    yesterdayWork = yesterdayWork,
+    todayPlan = todayPlan,
+    blockers = blockers,
+    teamMemberId = teamMemberId,
+    teamId = teamId,
+    createdAt = createdAt,
+    updatedAt = updatedAt
+)
+
+fun PaginationMetaDto.toDomain() = PaginationMetaData(
+    page = page,
+    size = size,
+    total = total
+)
+
+fun PaginatedStandupEntriesDto.toDomain() = PaginatedStandupEntriesData(
+    items = items.map { it.toDomain() },
+    meta = meta.toDomain()
+)
+

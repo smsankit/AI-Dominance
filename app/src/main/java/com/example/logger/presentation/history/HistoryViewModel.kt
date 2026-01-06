@@ -3,12 +3,11 @@ package com.example.logger.presentation.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.network.NetworkResult
-import com.example.logger.domain.model.Standup
+import com.example.logger.domain.model.StandupEntryData
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -18,7 +17,11 @@ import javax.inject.Inject
 
 data class HistoryUiState(
     val selectedDate: Date = Date(),
-    val submissions: List<Standup> = emptyList()
+    val submissions: List<StandupEntryData> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val currentPage: Int = 0,
+    val totalItems: Int = 0
 )
 
 @HiltViewModel
@@ -56,13 +59,32 @@ class HistoryViewModel @Inject constructor(
     }
 
     private fun refresh() {
-        // Source data from the same source as dashboard (today's standups) for now
         viewModelScope.launch {
-            getTodayStandup().collect { res ->
-                if (res is NetworkResult.Success) {
-                    _uiState.value = _uiState.value.copy(submissions = res.data.submissions)
-                } else {
-                    _uiState.value = _uiState.value.copy(submissions = emptyList())
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+            val dateStr = dateKeyFmt.format(_uiState.value.selectedDate)
+            val result = getTodayStandup(
+                page = 0,
+                size = 20,
+                standupDate = dateStr
+            )
+
+            when (result) {
+                is NetworkResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        submissions = result.data.items,
+                        isLoading = false,
+                        error = null,
+                        currentPage = result.data.meta.page,
+                        totalItems = result.data.meta.total
+                    )
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        submissions = emptyList(),
+                        isLoading = false,
+                        error = result.message ?: "An error occurred"
+                    )
                 }
             }
         }

@@ -1,6 +1,7 @@
 package com.example.logger.presentation.home
 
 import com.example.logger.domain.model.Standup
+import com.example.logger.domain.model.StandupEntryData
 
 data class HomeUiState(
     val isLoading: Boolean = false,
@@ -9,5 +10,7 @@ data class HomeUiState(
     val roster: List<String> = emptyList(),
     val submissions: List<Standup> = emptyList(),
     val pending: List<String> = emptyList(),
-    val lastUpdated: String = ""
+    val lastUpdated: String = "",
+    val standupEntries: List<StandupEntryData> = emptyList(),
+    val totalEntries: Int = 0
 )

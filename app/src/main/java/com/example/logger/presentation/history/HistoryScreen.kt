@@ -161,10 +161,46 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                 }
             }
 
-            /** -------- LIST & EMPTY STATE (UNCHANGED) -------- */
+            /** -------- LIST & EMPTY STATE -------- */
             val rows = state.submissions
 
-            if (rows.isEmpty()) {
+            if (state.isLoading) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            } else if (state.error != null) {
+                item {
+                    val errorMessage = state.error ?: "An error occurred"
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("⚠️", style = MaterialTheme.typography.displaySmall)
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            text = "Error Loading History",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.W600
+                            )
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = errorMessage,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else if (rows.isEmpty()) {
                 item {
                     Column(
                         modifier = Modifier
@@ -194,6 +230,16 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                         (s.blockers ?: "").trim().isNotEmpty() &&
                                 (s.blockers ?: "").lowercase() != "none"
 
+                    // Format time from createdAt timestamp
+                    val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+                    val dateTimeFormat = remember { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()) }
+                    val submittedTime = try {
+                        val date = dateTimeFormat.parse(s.createdAt)
+                        date?.let { timeFormat.format(it) } ?: s.createdAt
+                    } catch (e: Exception) {
+                        s.createdAt.substringAfter("T").substringBefore(".")
+                    }
+
                     ElevatedCard(elevation = CardDefaults.elevatedCardElevation(4.dp)) {
                         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
 
@@ -220,11 +266,8 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
                                             Text(
-                                                text = s.name
-                                                    .split(" ")
-                                                    .map { it.first() }
-                                                    .joinToString("")
-                                                    .take(2)
+                                                text = "TM",
+                                                style = MaterialTheme.typography.labelLarge
                                             )
                                         }
                                     }
@@ -234,7 +277,7 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
-                                                text = s.name,
+                                                text = "Team Member #${s.teamMemberId}",
                                                 style = MaterialTheme.typography.titleMedium
                                             )
                                             if (hasBlocker) {
@@ -256,7 +299,7 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                                             }
                                         }
                                         Text(
-                                            text = "Submitted at ${s.time}",
+                                            text = "Submitted at $submittedTime",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -270,7 +313,7 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Text(text = s.yesterday)
+                                Text(text = s.yesterdayWork)
 
                                 Spacer(Modifier.height(8.dp))
 
@@ -279,7 +322,7 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Text(text = s.today)
+                                Text(text = s.todayPlan)
 
                                 if (hasBlocker) {
                                     Spacer(Modifier.height(8.dp))

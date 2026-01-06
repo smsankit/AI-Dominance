@@ -17,9 +17,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.logger.R
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import com.example.logger.domain.model.StandupEntryData
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
@@ -27,19 +28,32 @@ import java.util.Locale
 @Composable
 fun ExportScreen(
     modifier: Modifier = Modifier,
-    date: String = "",
-    standups: List<ExportStandupUiModel> = emptyList(),
-    onDateChange: (String) -> Unit = {},
-    onExport: (String) -> Unit = {},
+    viewModel: ExportViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    // Initialize selected date from param or today using Calendar to avoid java.time API level issues
-    val today = remember {
-        val cal = Calendar.getInstance()
-        String.format(Locale.US, "%04d-%02d-%02d", cal[Calendar.YEAR], cal[Calendar.MONTH] + 1, cal[Calendar.DAY_OF_MONTH])
-    }
-    var selectedDate by remember { mutableStateOf(if (date.isNotBlank()) date else today) }
     var showDatePicker by remember { mutableStateOf(false) }
+
+    // Convert StandupEntryData to ExportStandupUiModel
+    val standups = remember(uiState.standupEntries) {
+        uiState.standupEntries.map { entry ->
+            ExportStandupUiModel(
+                name = "Team Member #${entry.teamMemberId}",
+                time = try {
+                    val dateTimeFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                    val date = dateTimeFormat.parse(entry.createdAt)
+                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    date?.let { timeFormat.format(it) } ?: entry.createdAt
+                } catch (e: Exception) {
+                    entry.createdAt.substringAfter("T").substringBefore(".")
+                },
+                yesterday = entry.yesterdayWork,
+                today = entry.todayPlan,
+                blockers = entry.blockers,
+                editedAt = null
+            )
+        }
+    }
 
     Column(
         modifier
@@ -80,7 +94,7 @@ fun ExportScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = selectedDate,
+                        value = uiState.selectedDate,
                         onValueChange = {}, // Disable manual editing
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -97,16 +111,13 @@ fun ExportScreen(
                             unfocusedIndicatorColor = Color(0xFFE7E0EC)
                         )
                     )
-                    if (selectedDate != date) {
-                        LaunchedEffect(selectedDate) { onDateChange(selectedDate) }
-                    }
                     if (showDatePicker) {
                         val dialog = remember { mutableStateOf<DatePickerDialog?>(null) }
                         DisposableEffect(showDatePicker) {
                             if (showDatePicker) {
                                 val cal = Calendar.getInstance().apply {
                                     // Try to parse selectedDate simply: yyyy-MM-dd
-                                    val parts = selectedDate.split("-")
+                                    val parts = uiState.selectedDate.split("-")
                                     if (parts.size == 3) {
                                         set(Calendar.YEAR, parts[0].toIntOrNull() ?: this[Calendar.YEAR])
                                         set(Calendar.MONTH, (parts[1].toIntOrNull()?.minus(1)) ?: this[Calendar.MONTH])
@@ -116,7 +127,8 @@ fun ExportScreen(
                                 dialog.value = DatePickerDialog(
                                     context,
                                     { _, year, month, dayOfMonth ->
-                                        selectedDate = String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, dayOfMonth)
+                                        val newDate = String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, dayOfMonth)
+                                        viewModel.onDateChange(newDate)
                                         showDatePicker = false
                                     },
                                     cal[Calendar.YEAR],
@@ -136,15 +148,15 @@ fun ExportScreen(
                     }
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = stringResource(R.string.export_file_label, "standup-$selectedDate.md"),
+                        text = stringResource(R.string.export_file_label, "standup-${uiState.selectedDate}.md"),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF666666)
                     )
                     Spacer(Modifier.height(12.dp))
                     Button(
-                        onClick = { onExport(selectedDate) },
+                        onClick = { /* TODO: Implement export functionality */ },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = standups.isNotEmpty(),
+                        enabled = standups.isNotEmpty() && !uiState.isLoading,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EA), contentColor = Color.White)
                     ) {
                         Icon(Icons.Outlined.Download, contentDescription = null)
@@ -153,7 +165,31 @@ fun ExportScreen(
                     }
                 }
             }
-            if (standups.isEmpty()) {
+
+            // Loading state
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (uiState.error != null) {
+                // Error state
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("⚠️", style = MaterialTheme.typography.headlineLarge)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Error Loading Data", style = MaterialTheme.typography.titleMedium, color = Color(0xFF666666))
+                    Text(uiState.error ?: "Unknown error", style = MaterialTheme.typography.bodySmall, color = Color(0xFF999999))
+                }
+            } else if (standups.isEmpty()) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -181,7 +217,7 @@ fun ExportScreen(
                         }
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            text = standupsToMarkdown(selectedDate, standups),
+                            text = standupsToMarkdown(uiState.selectedDate, standups),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFF333333),
                             modifier = Modifier.background(Color(0xFFF5F5F5)).padding(12.dp)
@@ -220,25 +256,10 @@ fun standupsToMarkdown(date: String, standups: List<ExportStandupUiModel>): Stri
 @Preview(showBackground = true, name = "Export Standup")
 @Composable
 fun PreviewExportScreen() {
-    ExportScreen(
-        date = "2025-12-30",
-        standups = listOf(
-            ExportStandupUiModel(
-                name = "Alex Johnson",
-                time = "09:10",
-                yesterday = "Reviewed PRs",
-                today = "Finalize API spec",
-                blockers = "None",
-                editedAt = null
-            ),
-            ExportStandupUiModel(
-                name = "Priya Verma",
-                time = "09:25",
-                yesterday = "Auth flow fixes",
-                today = "Add MFA",
-                blockers = "Waiting on UX",
-                editedAt = null
-            )
-        )
-    )
+    // Preview without ViewModel - just show the UI structure
+    MaterialTheme {
+        Column(Modifier.fillMaxSize()) {
+            Text("Export Screen Preview")
+        }
+    }
 }
