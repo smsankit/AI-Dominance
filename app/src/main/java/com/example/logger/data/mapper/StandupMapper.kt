@@ -55,11 +55,12 @@ fun StandupEntryDto.toDomain() = StandupEntryData(
 fun PaginationMetaDto.toDomain() = PaginationMetaData(
     page = page,
     size = size,
-    total = total
+    totalElements = totalElements,
+    totalPages = totalPages
 )
 
 fun PaginatedStandupEntriesDto.toDomain() = PaginatedStandupEntriesData(
-    items = items.map { it.toDomain() },
+    items = data.map { it.toDomain() },
     meta = meta.toDomain()
 )
 

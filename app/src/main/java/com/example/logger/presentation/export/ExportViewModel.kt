@@ -18,8 +18,13 @@ data class ExportUiState(
     val selectedDate: String = "",
     val standupEntries: List<StandupEntryData> = emptyList(),
     val isLoading: Boolean = false,
+    val isLoadingMore: Boolean = false,
     val error: String? = null,
-    val totalEntries: Int = 0
+    val currentPage: Int = 0,
+    val pageSize: Int = 100,
+    val totalEntries: Int = 0,
+    val totalPages: Int = 0,
+    val canLoadMore: Boolean = false
 )
 
 @HiltViewModel
@@ -39,33 +44,59 @@ class ExportViewModel @Inject constructor(
     }
 
     fun onDateChange(date: String) {
-        _uiState.value = _uiState.value.copy(selectedDate = date)
-        loadStandups(date)
+        _uiState.value = _uiState.value.copy(selectedDate = date, currentPage = 0)
+        loadStandups(date, resetList = true)
     }
 
-    private fun loadStandups(date: String) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+    fun loadMore() {
+        val currentState = _uiState.value
+        if (currentState.canLoadMore && !currentState.isLoadingMore) {
+            _uiState.value = currentState.copy(currentPage = currentState.currentPage + 1)
+            loadStandups(currentState.selectedDate, resetList = false)
+        }
+    }
 
+    private fun loadStandups(date: String, resetList: Boolean = true) {
+        viewModelScope.launch {
+            if (resetList) {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            } else {
+                _uiState.value = _uiState.value.copy(isLoadingMore = true, error = null)
+            }
+
+            val currentState = _uiState.value
             val result = getTodayStandup(
-                page = 0,
-                size = 100, // Get all entries for export
+                teamId = 1, // Using hardcoded teamId for now
+                page = currentState.currentPage,
+                size = currentState.pageSize,
                 standupDate = date
             )
 
             when (result) {
                 is NetworkResult.Success -> {
+                    val data = result.data
+                    val updatedEntries = if (resetList) {
+                        data.items
+                    } else {
+                        currentState.standupEntries + data.items
+                    }
+
                     _uiState.value = _uiState.value.copy(
-                        standupEntries = result.data.items,
+                        standupEntries = updatedEntries,
                         isLoading = false,
+                        isLoadingMore = false,
                         error = null,
-                        totalEntries = result.data.meta.total
+                        currentPage = data.meta.page,
+                        totalEntries = data.meta.totalElements,
+                        totalPages = data.meta.totalPages,
+                        canLoadMore = data.meta.page < data.meta.totalPages - 1
                     )
                 }
                 is NetworkResult.Error -> {
                     _uiState.value = _uiState.value.copy(
-                        standupEntries = emptyList(),
+                        standupEntries = if (resetList) emptyList() else currentState.standupEntries,
                         isLoading = false,
+                        isLoadingMore = false,
                         error = result.message ?: "An error occurred"
                     )
                 }

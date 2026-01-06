@@ -1,7 +1,7 @@
 package com.example.logger.data.remote.dto
 
 data class PaginatedStandupEntriesDto(
-    val items: List<StandupEntryDto>,
+    val data: List<StandupEntryDto>,
     val meta: PaginationMetaDto
 )
 
@@ -20,6 +20,7 @@ data class StandupEntryDto(
 data class PaginationMetaDto(
     val page: Int,
     val size: Int,
-    val total: Int
+    val totalElements: Int,
+    val totalPages: Int
 )
 

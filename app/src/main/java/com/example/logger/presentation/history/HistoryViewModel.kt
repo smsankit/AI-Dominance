@@ -19,9 +19,13 @@ data class HistoryUiState(
     val selectedDate: Date = Date(),
     val submissions: List<StandupEntryData> = emptyList(),
     val isLoading: Boolean = false,
+    val isLoadingMore: Boolean = false,
     val error: String? = null,
     val currentPage: Int = 0,
-    val totalItems: Int = 0
+    val pageSize: Int = 20,
+    val totalItems: Int = 0,
+    val totalPages: Int = 0,
+    val canLoadMore: Boolean = false
 )
 
 @HiltViewModel
@@ -38,8 +42,8 @@ class HistoryViewModel @Inject constructor(
     fun onPrevDate() {
         val cal = Calendar.getInstance().apply { time = _uiState.value.selectedDate }
         cal.add(Calendar.DAY_OF_MONTH, -1)
-        _uiState.value = _uiState.value.copy(selectedDate = cal.time)
-        refresh()
+        _uiState.value = _uiState.value.copy(selectedDate = cal.time, currentPage = 0)
+        refresh(resetList = true)
     }
 
     fun onNextDate() {
@@ -48,41 +52,66 @@ class HistoryViewModel @Inject constructor(
         val next = cal.time
         val today = Date()
         if (dateKeyFmt.format(next) <= dateKeyFmt.format(today)) {
-            _uiState.value = _uiState.value.copy(selectedDate = next)
-            refresh()
+            _uiState.value = _uiState.value.copy(selectedDate = next, currentPage = 0)
+            refresh(resetList = true)
         }
     }
 
     fun onPickDate(date: Date) {
-        _uiState.value = _uiState.value.copy(selectedDate = date)
-        refresh()
+        _uiState.value = _uiState.value.copy(selectedDate = date, currentPage = 0)
+        refresh(resetList = true)
     }
 
-    private fun refresh() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+    fun loadMore() {
+        val currentState = _uiState.value
+        if (currentState.canLoadMore && !currentState.isLoadingMore) {
+            _uiState.value = currentState.copy(currentPage = currentState.currentPage + 1)
+            refresh(resetList = false)
+        }
+    }
 
-            val dateStr = dateKeyFmt.format(_uiState.value.selectedDate)
+    private fun refresh(resetList: Boolean = true) {
+        viewModelScope.launch {
+            if (resetList) {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            } else {
+                _uiState.value = _uiState.value.copy(isLoadingMore = true, error = null)
+            }
+
+            val currentState = _uiState.value
+            val dateStr = dateKeyFmt.format(currentState.selectedDate)
             val result = getTodayStandup(
-                page = 0,
-                size = 20,
+                teamId = 1, // Using hardcoded teamId for now
+                page = currentState.currentPage,
+                size = currentState.pageSize,
                 standupDate = dateStr
             )
 
             when (result) {
                 is NetworkResult.Success -> {
+                    val data = result.data
+                    val updatedSubmissions = if (resetList) {
+                        data.items
+                    } else {
+                        currentState.submissions + data.items
+                    }
+
                     _uiState.value = _uiState.value.copy(
-                        submissions = result.data.items,
+                        submissions = updatedSubmissions,
                         isLoading = false,
+                        isLoadingMore = false,
                         error = null,
-                        currentPage = result.data.meta.page,
-                        totalItems = result.data.meta.total
+                        currentPage = data.meta.page,
+                        totalItems = data.meta.totalElements,
+                        totalPages = data.meta.totalPages,
+                        canLoadMore = data.meta.page < data.meta.totalPages - 1
                     )
                 }
                 is NetworkResult.Error -> {
                     _uiState.value = _uiState.value.copy(
-                        submissions = emptyList(),
+                        submissions = if (resetList) emptyList() else currentState.submissions,
                         isLoading = false,
+                        isLoadingMore = false,
                         error = result.message ?: "An error occurred"
                     )
                 }

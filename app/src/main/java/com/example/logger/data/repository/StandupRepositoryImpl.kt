@@ -46,17 +46,17 @@ class StandupRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getStandupEntries(
+        teamId: Long,
         page: Int?,
         size: Int?,
-        teamId: Long?,
         teamMemberId: Long?,
         standupDate: String?
     ): NetworkResult<PaginatedStandupEntriesData> {
         return try {
             val response = api.getStandupEntries(
+                teamId = teamId,
                 page = page,
                 size = size,
-                teamId = teamId,
                 teamMemberId = teamMemberId,
                 standupDate = standupDate
             )

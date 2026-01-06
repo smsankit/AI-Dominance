@@ -8,6 +8,7 @@ data class PaginatedStandupEntriesData(
 data class PaginationMetaData(
     val page: Int,
     val size: Int,
-    val total: Int
+    val totalElements: Int,
+    val totalPages: Int
 )
 

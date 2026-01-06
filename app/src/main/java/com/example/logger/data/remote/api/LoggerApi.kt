@@ -8,6 +8,7 @@ import com.example.logger.data.remote.dto.SubmitStandupEntryRequestDto
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface LoggerApi {
@@ -17,15 +18,15 @@ interface LoggerApi {
     @GET("standup/today")
     suspend fun getStandup(): StandupResponseDto
 
-    @GET("standup-entries")
+    @GET("teams/{teamId}/members/standups")
     suspend fun getStandupEntries(
+        @Path("teamId") teamId: Long,
         @Query("page") page: Int? = null,
         @Query("size") size: Int? = null,
-        @Query("teamId") teamId: Long? = null,
         @Query("teamMemberId") teamMemberId: Long? = null,
         @Query("standupDate") standupDate: String? = null
     ): PaginatedStandupEntriesDto
 
-    @POST("standuploggerservices/teams/1/members/standups")
+    @POST("teams/1/members/standups")
     suspend fun submitStandupEntry(@Body body: SubmitStandupEntryRequestDto): StandupEntryResponseDto
 }

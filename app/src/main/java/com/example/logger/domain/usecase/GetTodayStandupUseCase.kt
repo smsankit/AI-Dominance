@@ -9,16 +9,16 @@ class GetTodayStandupUseCase @Inject constructor(
     private val repository: StandupRepository
 ) {
     suspend operator fun invoke(
+        teamId: Long,
         page: Int? = null,
         size: Int? = null,
-        teamId: Long? = null,
         teamMemberId: Long? = null,
         standupDate: String? = null
     ): NetworkResult<PaginatedStandupEntriesData> {
         return repository.getStandupEntries(
+            teamId = teamId,
             page = page,
             size = size,
-            teamId = teamId,
             teamMemberId = teamMemberId,
             standupDate = standupDate
         )

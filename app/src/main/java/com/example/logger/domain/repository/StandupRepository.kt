@@ -11,9 +11,9 @@ interface StandupRepository {
     fun getTodayStandup(): Flow<NetworkResult<StandupDay>>
     suspend fun submitStandupEntry(request: StandupEntryRequestData): NetworkResult<StandupEntryData>
     suspend fun getStandupEntries(
+        teamId: Long,
         page: Int? = null,
         size: Int? = null,
-        teamId: Long? = null,
         teamMemberId: Long? = null,
         standupDate: String? = null
     ): NetworkResult<PaginatedStandupEntriesData>

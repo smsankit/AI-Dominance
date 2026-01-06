@@ -37,36 +37,49 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun load() {
-        _uiState.update { it.copy(isLoading = true, error = null) }
+    fun load(resetList: Boolean = true) {
         viewModelScope.launch {
+            if (resetList) {
+                _uiState.update { it.copy(isLoading = true, error = null, currentPage = 0) }
+            } else {
+                _uiState.update { it.copy(isLoadingMore = true, error = null) }
+            }
+
             // Get today's date in yyyy-MM-dd format
             val todayDate = dateFormatter.format(Date())
+            val currentState = _uiState.value
 
             val result = getTodayStandup(
-                page = 0,
-                size = 20,
+                teamId = 1, // Using hardcoded teamId for now
+                page = currentState.currentPage,
+                size = currentState.pageSize,
                 standupDate = todayDate
             )
 
             when (result) {
                 is NetworkResult.Success -> {
                     val data = result.data
-                    // For now, we'll need to handle the roster differently
-                    // as the new API returns entries, not the full roster
-                    val submittedIds = data.items.map { it.teamMemberId }.toSet()
+                    val updatedEntries = if (resetList) {
+                        data.items
+                    } else {
+                        currentState.standupEntries + data.items
+                    }
 
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            isLoadingMore = false,
                             error = null,
                             date = todayDate,
-                            roster = emptyList(), // Will need to fetch roster separately if needed
-                            submissions = emptyList(), // Converting StandupEntryData to Standup if needed
+                            roster = emptyList(),
+                            submissions = emptyList(),
                             pending = emptyList(),
                             lastUpdated = nowTime(),
-                            standupEntries = data.items,
-                            totalEntries = data.meta.total
+                            standupEntries = updatedEntries,
+                            currentPage = data.meta.page,
+                            totalEntries = data.meta.totalElements,
+                            totalPages = data.meta.totalPages,
+                            canLoadMore = data.meta.page < data.meta.totalPages - 1
                         )
                     }
                 }
@@ -74,10 +87,19 @@ class HomeViewModel @Inject constructor(
                 is NetworkResult.Error -> _uiState.update {
                     it.copy(
                         isLoading = false,
+                        isLoadingMore = false,
                         error = result.message ?: "Unknown error"
                     )
                 }
             }
+        }
+    }
+
+    fun loadMore() {
+        val currentState = _uiState.value
+        if (currentState.canLoadMore && !currentState.isLoadingMore) {
+            _uiState.update { it.copy(currentPage = currentState.currentPage + 1) }
+            load(resetList = false)
         }
     }
 
