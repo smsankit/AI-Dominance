@@ -1,8 +1,12 @@
 package com.example.logger.presentation.export
 
 import android.app.DatePickerDialog
+import android.os.Environment
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CalendarToday
@@ -20,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.logger.R
 import com.example.logger.domain.model.StandupEntryData
+import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -28,7 +34,8 @@ import java.util.Locale
 @Composable
 fun ExportScreen(
     modifier: Modifier = Modifier,
-    viewModel: ExportViewModel = hiltViewModel()
+    viewModel: ExportViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -66,7 +73,7 @@ fun ExportScreen(
         TopAppBar(
             title = { Text(stringResource(R.string.export_standups_title)) },
             navigationIcon = {
-                IconButton(onClick = { /* TODO: handle back */ }) {
+                IconButton(onClick = onNavigateBack) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             },
@@ -156,7 +163,18 @@ fun ExportScreen(
                     )
                     Spacer(Modifier.height(12.dp))
                     Button(
-                        onClick = { /* TODO: Implement export functionality */ },
+                        onClick = {
+                            val markdown = standupsToMarkdown(uiState.selectedDate, standups)
+                            val fileName = "standup-${uiState.selectedDate}.md"
+                            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                            val file = File(downloadsDir, fileName)
+                            try {
+                                FileOutputStream(file).use { it.write(markdown.toByteArray()) }
+                                Toast.makeText(context, "Exported to ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Failed to export: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = standups.isNotEmpty() && !uiState.isLoading,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EA), contentColor = Color.White)
@@ -222,7 +240,9 @@ fun ExportScreen(
                             text = standupsToMarkdown(uiState.selectedDate, standups),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFF333333),
-                            modifier = Modifier.background(Color(0xFFF5F5F5)).padding(12.dp)
+                            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                                .background(Color(0xFFF5F5F5))
+                                .padding(12.dp)
                         )
                     }
                 }

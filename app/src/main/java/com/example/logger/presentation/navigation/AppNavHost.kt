@@ -181,7 +181,9 @@ fun AppNavHost() {
         }
         composable(Destinations.EXPORT) {
             // Export should not show bottom bar or FAB. Render without RootScaffold.
-            com.example.logger.presentation.export.ExportScreen()
+            com.example.logger.presentation.export.ExportScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }
