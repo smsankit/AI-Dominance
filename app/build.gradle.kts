@@ -94,6 +94,18 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Coroutine testing
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    // Turbine for testing
+    testImplementation("app.cash.turbine:turbine:1.0.0")
+    // Mockito for mocking
+    testImplementation("org.mockito:mockito-core:5.2.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.0")
+    // JUnit for testing
+    testImplementation("junit:junit:4.13.2")
+    // Robolectric for Android main looper mocking in unit tests
+    testImplementation("org.robolectric:robolectric:4.11.1")
 }
 
 kapt {

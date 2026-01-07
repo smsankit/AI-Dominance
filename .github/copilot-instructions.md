@@ -34,4 +34,15 @@ Guidelines:
 - Any colors used in the app should be defined in the `presentation/theme/Color.kt` files.
 - Any string used in the app should be defined in the `res/values/strings.xml` file.
 - Follow existing coding conventions and styles in the project.
+- Use JUnit for unit tests and Mockito for mocking dependencies and RobolectricTestRunner.
+- Place unit tests in the corresponding `test` source set mirroring the main source set structure.
+- Write tests for ViewModels, Use Cases, and Repository implementations.
+- Aim for high code coverage and meaningful test cases.
+- Use descriptive names for test methods indicating the scenario being tested.
+- Organize tests using the Given-When-Then structure for clarity.
+- Avoid hardcoding values in tests; use constants or test data builders.
+- Mock external dependencies to isolate the unit under test.
+- Test edge cases and error scenarios to ensure robustness.
+- Run tests frequently to catch regressions early.
+- Review and update tests as the codebase evolves to maintain relevance.
 

@@ -73,11 +73,11 @@ fun HomeRoute(
         topBar = {
             androidx.compose.material3.TopAppBar(
                 title = { Text("Dashboard") },
-                actions = {
-                    IconButton(onClick = { /* TODO: navigate to settings */ }) {
-                        Icon(Icons.Outlined.Settings, contentDescription = "Settings")
-                    }
-                },
+//                actions = {
+//                    IconButton(onClick = { /* TODO: navigate to settings */ }) {
+//                        Icon(Icons.Outlined.Settings, contentDescription = "Settings")
+//                    }
+//                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF6200EA),
                     titleContentColor = Color.White,

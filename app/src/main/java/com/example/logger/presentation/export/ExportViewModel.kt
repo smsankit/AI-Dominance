@@ -109,18 +109,6 @@ class ExportViewModel @Inject constructor(
         }
     }
 
-    fun exportMarkdownFile(context: Context, date: String, standups: List<ExportStandupUiModel>): Boolean {
-        val markdown = standupsToMarkdown(date, standups)
-        val fileName = "standup-$date.md"
-        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        val file = File(downloadsDir, fileName)
-        return try {
-            FileOutputStream(file).use { it.write(markdown.toByteArray()) }
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
 
     fun exportMarkdownToUri(context: Context, uri: Uri, date: String, standups: List<ExportStandupUiModel>): Boolean {
         return try {

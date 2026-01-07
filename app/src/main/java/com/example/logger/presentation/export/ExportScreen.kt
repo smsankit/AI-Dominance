@@ -65,7 +65,6 @@ fun ExportScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val activity = LocalContext.current as? Activity
     var showDatePicker by remember { mutableStateOf(false) }
 
     // Convert StandupEntryData to ExportStandupUiModel

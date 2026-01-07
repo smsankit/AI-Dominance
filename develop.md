@@ -214,3 +214,39 @@ Feature: SubmitStandup
 **Suggestion:** Created SubmitStandupUiMapper in presentation layer and used it in SubmitStandupViewModel instead of inline construction.
 **Action:** Accepted
 **Reasoning:** Keeps ViewModel lean; improves reusability and testability.
+
+### Interaction 32
+**Prompt/Context:** Write testcases for `SubmitStandupViewModel.kt` and get them passing.
+**Suggestion:** Added unit tests using JUnit, Mockito, Turbine, and kotlinx-coroutines-test; created `SubmitStandupViewModelTest.kt` with cases for initial roster load, validation errors, success reset + event, and error event.
+**Action:** Accepted
+**Reasoning:** Covers core ViewModel behavior aligned with MVVM and Clean Architecture.
+
+### Interaction 33
+**Prompt/Context:** Tests failing due to missing test libraries (unresolved references).
+**Suggestion:** Add test dependencies: coroutines-test, turbine, mockito-core, mockito-kotlin, and JUnit to `app/build.gradle.kts`.
+**Action:** Accepted
+**Reasoning:** Required to compile and run unit tests for coroutines and Flow-based ViewModel.
+
+### Interaction 34
+**Prompt/Context:** Tests failing with "Method getMainLooper not mocked" when using `viewModelScope`.
+**Suggestion:** Use Robolectric runner and set/reset `Dispatchers.Main` in tests; annotate tests with `@RunWith(RobolectricTestRunner::class)`, call `Dispatchers.setMain(UnconfinedTestDispatcher())` in `@Before` and `Dispatchers.resetMain()` in `@After`.
+**Action:** Accepted
+**Reasoning:** Provides Android main looper and proper dispatcher for `viewModelScope` in JVM unit tests.
+
+### Interaction 35
+**Prompt/Context:** Tests hanging/not advancing due to coroutines launched in `init {}` and `submit()`.
+**Suggestion:** Switch to `UnconfinedTestDispatcher` and add `advanceUntilIdle()` in tests after ViewModel creation and actions to let coroutines complete.
+**Action:** Accepted
+**Reasoning:** Ensures deterministic progression of coroutines started by `viewModelScope.launch`.
+
+### Interaction 36
+**Prompt/Context:** Type mismatch and mock signature mismatches for use cases.
+**Suggestion:** - Return a real `StandupEntryData` from `SubmitStandupUseCase` mock for success. - Stub `GetTeamMembersUseCase.invoke(teamId, page, size, isApiCallRequired)` with 4 parameters to match ViewModel usage.
+**Action:** Accepted
+**Reasoning:** Aligns mocks to actual domain contracts, preventing compilation and runtime failures.
+
+### Interaction 37
+**Prompt/Context:** Document testing setup and commands for Windows PowerShell.
+**Suggestion:** Added Testing section to `develop.md` detailing dependencies, commands (`./gradlew test`, `./gradlew testDebugUnitTest`, and filtering), and best practices (Robolectric, Dispatchers.Main, Turbine, `advanceUntilIdle`).
+**Action:** Accepted
+**Reasoning:** Provides clear guidance for contributors to run and maintain tests reliably.
