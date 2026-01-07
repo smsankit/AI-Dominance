@@ -1,6 +1,8 @@
 package com.example.logger.presentation.roster
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -31,26 +33,35 @@ fun RosterScreen(
             )
         }
     ) { inner ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(inner).padding(16.dp),
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(inner),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Page header per wireframe with member count
-            Column {
-                val pluralSuffix = if (members.size == 1) "" else "s"
-                Text(text = stringResource(R.string.roster_members_count, members.size, pluralSuffix), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            item {
+                Column {
+                    val pluralSuffix = if (members.size == 1) "" else "s"
+                    Text(text = stringResource(R.string.roster_members_count, members.size, pluralSuffix), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
 
             if (members.isEmpty()) {
-                Column(modifier = Modifier.fillMaxWidth().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("👥", style = MaterialTheme.typography.displaySmall)
-                    Spacer(Modifier.height(8.dp))
-                    Text(stringResource(R.string.roster_empty_title), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.roster_empty_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                item {
+                    Column(modifier = Modifier.fillMaxWidth().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("👥", style = MaterialTheme.typography.displaySmall)
+                        Spacer(Modifier.height(8.dp))
+                        Text(stringResource(R.string.roster_empty_title), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.roster_empty_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             } else {
-                Text(text = stringResource(R.string.roster_section_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                members.forEachIndexed { idx, name ->
+                item {
+                    Text(text = stringResource(R.string.roster_section_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                }
+
+                items(members) { name ->
+                    val idx = members.indexOf(name)
                     ElevatedCard(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -70,7 +81,6 @@ fun RosterScreen(
                             }
                         }
                     }
-                    Spacer(Modifier.height(4.dp))
                 }
             }
         }

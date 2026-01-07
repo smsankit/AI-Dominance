@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -124,15 +126,15 @@ fun AppNavHost() {
                 SubmitConfirmScreen(
                     timestamp = ts,
                     onGoDashboard = {
-                        navController.navigate(Destinations.HOME) {
-                            popUpTo(Destinations.HOME) { saveState = true }
+                        navController.navigate(Destinations.DASHBOARD) {
+                            popUpTo(Destinations.DASHBOARD) { inclusive = false }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState = false
                         }
                     },
                     onGoHistory = {
                         navController.navigate(Destinations.HISTORY) {
-                            popUpTo(Destinations.HOME) { saveState = true }
+                            popUpTo(Destinations.DASHBOARD) { inclusive = false }
                             launchSingleTop = true
                             restoreState = true
                         }
@@ -154,10 +156,14 @@ fun AppNavHost() {
                 }
             }
         }
-        composable(Destinations.ROSTER) {
+        composable(Destinations.ROSTER) { backStackEntry ->
             RootScaffold(navController = navController) { padding ->
                 Box(Modifier.padding(padding)) {
-                    val homeVm: HomeViewModel = hiltViewModel()
+                    // Get ViewModel from DASHBOARD backstack entry to avoid unnecessary API calls
+                    val dashboardEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(Destinations.DASHBOARD)
+                    }
+                    val homeVm: HomeViewModel = hiltViewModel(dashboardEntry)
                     val state = homeVm.uiState.collectAsState()
                     RosterScreen(
                         members = state.value.roster,
@@ -167,10 +173,14 @@ fun AppNavHost() {
             }
         }
         // Missing standups screen route
-        composable(Destinations.MISSING) {
+        composable(Destinations.MISSING) { backStackEntry ->
             // Missing should not show FAB or bottom bar according to requirements.
             // Render without RootScaffold to hide chrome.
-            val homeVm: HomeViewModel = hiltViewModel()
+            // Get ViewModel from DASHBOARD backstack entry to avoid unnecessary API calls
+            val dashboardEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Destinations.DASHBOARD)
+            }
+            val homeVm: HomeViewModel = hiltViewModel(dashboardEntry)
             val state = homeVm.uiState.collectAsState()
             MissingScreen(
                 roster = state.value.roster,

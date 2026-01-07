@@ -3,6 +3,7 @@ package com.example.logger.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.network.NetworkResult
+import com.example.logger.domain.model.Standup
 import com.example.logger.domain.usecase.GetTeamMembersUseCase
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,17 +27,26 @@ class HomeViewModel @Inject constructor(
 
     private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
+    // Map to store team member id to name mapping
+    private val teamMembersMap = mutableMapOf<Long, String>()
+
     init {
-        load()
         fetchTeamMembers()
     }
 
     private fun fetchTeamMembers() {
         viewModelScope.launch {
-            getTeamMembers(1, 0, 20, true).collect { result ->
+            getTeamMembers(1, 0, 100, true).collect { result ->
                 if (result is NetworkResult.Success) {
                     val members = result.data
+                    // Store in map for easy lookup
+                    teamMembersMap.clear()
+                    members.forEach { member ->
+                        teamMembersMap[member.id] = member.name
+                    }
                     _uiState.update { it.copy(roster = members.map { m -> m.name }) }
+                    // Load standup data after team members are fetched
+                    load()
                 }
             }
         }
@@ -44,8 +54,17 @@ class HomeViewModel @Inject constructor(
 
     fun load(resetList: Boolean = true) {
         viewModelScope.launch {
+            // Only show full loading if team members haven't been loaded yet
+            val showFullLoading = teamMembersMap.isEmpty()
+
             if (resetList) {
-                _uiState.update { it.copy(isLoading = true, error = null, currentPage = 0) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = showFullLoading,
+                        error = null,
+                        currentPage = 0
+                    )
+                }
             } else {
                 _uiState.update { it.copy(isLoadingMore = true, error = null) }
             }
@@ -70,15 +89,40 @@ class HomeViewModel @Inject constructor(
                         currentState.standupEntries + data.items
                     }
 
+                    // Map StandupEntryData to Standup model for UI
+                    val mappedSubmissions = updatedEntries.map { entry ->
+                        val memberName = teamMembersMap[entry.teamMemberId] ?: "Team Member #${entry.teamMemberId}"
+                        val time = try {
+                            // Parse createdAt timestamp (format: "yyyy-MM-dd HH:mm:ss")
+                            val parts = entry.createdAt?.split(" ")
+                            parts?.getOrNull(1)?.substring(0, 5) ?: "--:--"
+                        } catch (_: Exception) {
+                            "--:--"
+                        }
+
+                        Standup(
+                            id = entry.id.toString(),
+                            name = memberName,
+                            yesterday = entry.yesterdayWork,
+                            today = entry.todayPlan,
+                            blockers = entry.blockers,
+                            time = time,
+                            editedAt = entry.updatedAt
+                        )
+                    }
+
+                    // Calculate pending members
+                    val submittedMemberIds = updatedEntries.map { it.teamMemberId }.toSet()
+                    val pendingMembers = teamMembersMap.filterKeys { it !in submittedMemberIds }.values.toList()
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             isLoadingMore = false,
                             error = null,
                             date = todayDate,
-                            roster = emptyList(),
-                            submissions = emptyList(),
-                            pending = emptyList(),
+                            submissions = mappedSubmissions,
+                            pending = pendingMembers,
                             lastUpdated = nowTime(),
                             standupEntries = updatedEntries,
                             currentPage = data.meta.page,

@@ -4,15 +4,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Download
@@ -30,9 +34,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -57,6 +63,12 @@ fun HomeRoute(
     onNavigateExport: () -> Unit = {}, // Add this line
 ) {
     val state by viewModel.uiState.collectAsState()
+
+    // Refresh data when navigating back to this screen
+    LaunchedEffect(Unit) {
+        viewModel.load()
+    }
+
     Scaffold(
         topBar = {
             androidx.compose.material3.TopAppBar(
@@ -259,48 +271,108 @@ private fun RowHeader(onExport: () -> Unit) {
 
 @Composable
 private fun SubmissionCard(s: Standup) {
-    Card(
+    val hasBlocker = (s.blockers ?: "").trim().isNotEmpty() &&
+                     (s.blockers ?: "").lowercase() != "none"
+
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Column(Modifier.fillMaxWidth()) {
-                RowHeaderAvatar(name = s.name, time = s.time)
+        androidx.compose.foundation.layout.Row(modifier = Modifier.height(androidx.compose.foundation.layout.IntrinsicSize.Min)) {
+            // Red vertical bar for blockers
+            if (hasBlocker) {
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .fillMaxHeight()
+                        .background(MaterialTheme.colorScheme.error)
+                )
             }
-            Spacer(Modifier.height(8.dp))
-            LabeledSection(label = "YESTERDAY", text = s.yesterday)
-            Spacer(Modifier.height(8.dp))
-            LabeledSection(label = "TODAY", text = s.today)
-            if (!s.blockers.isNullOrBlank()) {
+
+            Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                Column(Modifier.fillMaxWidth()) {
+                    RowHeaderAvatar(name = s.name, time = s.time, hasBlocker = hasBlocker)
+                }
+                Spacer(Modifier.height(12.dp))
+                LabeledSection(label = "YESTERDAY", text = s.yesterday)
                 Spacer(Modifier.height(8.dp))
-                LabeledSection(label = "BLOCKERS", text = s.blockers ?: "", highlight = true)
+                LabeledSection(label = "TODAY", text = s.today)
+                if (hasBlocker) {
+                    Spacer(Modifier.height(8.dp))
+                    ElevatedCard(
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "⚠ BLOCKERS",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Text(
+                                text = s.blockers ?: "",
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun RowHeaderAvatar(name: String, time: String) {
+private fun RowHeaderAvatar(name: String, time: String, hasBlocker: Boolean = false) {
     androidx.compose.foundation.layout.Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ) {
         val initials = name.split(" ").mapNotNull { it.firstOrNull()?.toString() }.take(2).joinToString("")
-        Box(
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.small)
-                .background(Color(0xFFEDE7F6))
-                .height(40.dp)
-                .padding(horizontal = 12.dp),
-            contentAlignment = Alignment.Center
+
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            modifier = Modifier.size(40.dp)
         ) {
-            Text(initials, color = Color(0xFF5E35B1), fontWeight = FontWeight.Bold)
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = initials,
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
         }
+
         Spacer(Modifier.width(12.dp))
+
         Column(Modifier.weight(1f)) {
-            Text(name, style = MaterialTheme.typography.titleMedium)
-            Text("Submitted at $time", style = MaterialTheme.typography.bodySmall, color = Color(0xFF666666))
+            androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(name, style = MaterialTheme.typography.titleMedium)
+
+                if (hasBlocker) {
+                    Spacer(Modifier.width(8.dp))
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.errorContainer
+                    ) {
+                        Text(
+                            text = "⚠ HAS BLOCKER",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(
+                                horizontal = 8.dp,
+                                vertical = 2.dp
+                            )
+                        )
+                    }
+                }
+            }
+
+            Text(
+                "Submitted at $time",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
