@@ -1,18 +1,47 @@
 package com.example.logger.presentation.export
 
+import android.app.Activity
 import android.app.DatePickerDialog
-import android.os.Environment
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,9 +52,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.logger.R
-import com.example.logger.domain.model.StandupEntryData
-import java.io.File
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -39,6 +65,7 @@ fun ExportScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val activity = LocalContext.current as? Activity
     var showDatePicker by remember { mutableStateOf(false) }
 
     // Convert StandupEntryData to ExportStandupUiModel
@@ -61,6 +88,17 @@ fun ExportScreen(
                 blockers = entry.blockers,
                 editedAt = entry.updatedAt
             )
+        }
+    }
+
+    val createDocumentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri ->
+        if (uri != null) {
+            val success = viewModel.exportMarkdownToUri(context, uri, uiState.selectedDate, standups)
+            if (success) {
+                Toast.makeText(context, "Exported to file", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, "Failed to export file", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -164,16 +202,8 @@ fun ExportScreen(
                     Spacer(Modifier.height(12.dp))
                     Button(
                         onClick = {
-                            val markdown = standupsToMarkdown(uiState.selectedDate, standups)
                             val fileName = "standup-${uiState.selectedDate}.md"
-                            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                            val file = File(downloadsDir, fileName)
-                            try {
-                                FileOutputStream(file).use { it.write(markdown.toByteArray()) }
-                                Toast.makeText(context, "Exported to ${file.absolutePath}", Toast.LENGTH_LONG).show()
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Failed to export: ${e.message}", Toast.LENGTH_LONG).show()
-                            }
+                            createDocumentLauncher.launch(fileName)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = standups.isNotEmpty() && !uiState.isLoading,

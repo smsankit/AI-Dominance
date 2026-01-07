@@ -1,5 +1,8 @@
 package com.example.logger.presentation.export
 
+import android.content.Context
+import android.net.Uri
+import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.network.NetworkResult
@@ -9,6 +12,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -103,5 +108,27 @@ class ExportViewModel @Inject constructor(
             }
         }
     }
-}
 
+    fun exportMarkdownFile(context: Context, date: String, standups: List<ExportStandupUiModel>): Boolean {
+        val markdown = standupsToMarkdown(date, standups)
+        val fileName = "standup-$date.md"
+        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val file = File(downloadsDir, fileName)
+        return try {
+            FileOutputStream(file).use { it.write(markdown.toByteArray()) }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun exportMarkdownToUri(context: Context, uri: Uri, date: String, standups: List<ExportStandupUiModel>): Boolean {
+        return try {
+            val markdown = standupsToMarkdown(date, standups)
+            context.contentResolver.openOutputStream(uri)?.use { it.write(markdown.toByteArray()) }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+}
