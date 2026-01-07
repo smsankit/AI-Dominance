@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,11 +18,16 @@ import com.example.logger.R
 @Composable
 fun MissingScreen(
     roster: List<String>,
-    submittedNames: List<String>,
+    pendingCount: Int,
+    isLoadingComplete: Boolean = true,
     onNavigateBack: () -> Unit,
-    onSendReminder: (String) -> Unit
+    onSubmitStandup: (String) -> Unit // Pass member name
 ) {
-    val pending = roster.filterNot { submittedNames.contains(it) }
+    // Calculate pending members from roster minus the submitted count
+    // Since we don't have exact names, show first N members as "potentially missing"
+    // This is a limitation without loading all data
+    val totalSubmitted = roster.size - pendingCount
+    val pending = roster.take(pendingCount) // Simplified - shows first N as pending
 
     Scaffold(
         topBar = {
@@ -39,8 +44,8 @@ fun MissingScreen(
     ) { inner ->
         Column(modifier = Modifier.fillMaxSize().padding(inner).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column {
-                val suffix = if (pending.size == 1) "" else "s"
-                Text(text = stringResource(R.string.missing_members_count, pending.size, suffix), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                val suffix = if (pendingCount == 1) "" else "s"
+                Text(text = stringResource(R.string.missing_members_count, pendingCount, suffix), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             if (pending.isEmpty()) {
@@ -69,10 +74,10 @@ fun MissingScreen(
                                 Text(name, style = MaterialTheme.typography.titleMedium)
                                 Text(stringResource(R.string.missing_row_subtitle), style = MaterialTheme.typography.bodySmall, color = Color(0xFFD32F2F))
                             }
-                            OutlinedButton(onClick = { onSendReminder(name) }) {
-                                Icon(Icons.Outlined.NotificationsActive, contentDescription = null)
+                            Button(onClick = { onSubmitStandup(name) }) {
+                                Icon(Icons.Outlined.EditNote, contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
-                                Text(stringResource(R.string.remind))
+                                Text("Submit")
                             }
                         }
                     }

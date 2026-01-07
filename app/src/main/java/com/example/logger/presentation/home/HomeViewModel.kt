@@ -111,7 +111,14 @@ class HomeViewModel @Inject constructor(
                         )
                     }
 
-                    // Calculate pending members
+                    // Calculate pending members based on total count, not loaded items
+                    // This ensures correct count during pagination
+                    val totalSubmitted = data.meta.totalElements
+                    val totalTeamMembers = teamMembersMap.size
+                    val pendingCount = totalTeamMembers - totalSubmitted
+
+                    // For the pending list, we can only show names for members we know haven't submitted
+                    // based on loaded data. The actual count is based on totalElements.
                     val submittedMemberIds = updatedEntries.map { it.teamMemberId }.toSet()
                     val pendingMembers = teamMembersMap.filterKeys { it !in submittedMemberIds }.values.toList()
 
@@ -122,7 +129,8 @@ class HomeViewModel @Inject constructor(
                             error = null,
                             date = todayDate,
                             submissions = mappedSubmissions,
-                            pending = pendingMembers,
+                            pending = pendingMembers, // Names list (from loaded data)
+                            pendingCount = pendingCount, // Accurate count (from totalElements)
                             lastUpdated = nowTime(),
                             standupEntries = updatedEntries,
                             currentPage = data.meta.page,

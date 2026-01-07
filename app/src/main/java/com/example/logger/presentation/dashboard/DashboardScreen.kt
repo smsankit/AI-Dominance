@@ -16,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun DashboardScreen(
+    shouldRefresh: Boolean = false,
     onNavigateSubmit: () -> Unit = {},
     onNavigateHistory: () -> Unit = {},
     onNavigateSettings: () -> Unit = {},
@@ -26,6 +27,7 @@ fun DashboardScreen(
     val vm: HomeViewModel = hiltViewModel()
     HomeRoute(
         viewModel = vm,
+        shouldRefresh = shouldRefresh,
         onViewMissing = onNavigateMissing,
         onSubmit = onNavigateSubmit,
         onExport = onNavigateExport,

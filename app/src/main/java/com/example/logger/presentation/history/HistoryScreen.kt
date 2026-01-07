@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -34,8 +36,22 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
 
     val inputFormat = remember { SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()) }
     val displayFormat = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
-    val todayKey = remember {
-        SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
+    // Calculate yesterday's date for max date validation
+    val yesterdayMillis = remember {
+        Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_MONTH, -1)
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+        }.timeInMillis
+    }
+    // Yesterday key for next button validation
+    val yesterdayKey = remember {
+        SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(
+            Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_MONTH, -1)
+            }.time
+        )
     }
 
     fun openDatePicker() {
@@ -52,7 +68,8 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
             cal.get(Calendar.MONTH),
             cal.get(Calendar.DAY_OF_MONTH)
         ).apply {
-            datePicker.maxDate = System.currentTimeMillis()
+            // Set max date to yesterday (exclude today)
+            datePicker.maxDate = yesterdayMillis
         }.show()
     }
 
@@ -72,7 +89,24 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
         }
     ) { innerPadding ->
 
+        val listState = rememberLazyListState()
+
+        // Detect when user reaches the end of the list for infinite scrolling
+        LaunchedEffect(listState, state.canLoadMore) {
+            snapshotFlow {
+                val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+                val totalItems = listState.layoutInfo.totalItemsCount
+                lastVisibleItem?.index == totalItems - 1 && totalItems > 0
+            }
+            .collect { isAtEnd ->
+                if (isAtEnd && state.canLoadMore && !state.isLoadingMore) {
+                    vm.loadMore()
+                }
+            }
+        }
+
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
@@ -153,7 +187,7 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                                 enabled = SimpleDateFormat(
                                     "yyyyMMdd",
                                     Locale.getDefault()
-                                ).format(state.selectedDate) != todayKey,
+                                ).format(state.selectedDate) != yesterdayKey,
                                 onClick = { vm.onNextDate() }
                             )
                         }
@@ -346,6 +380,20 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            // Loading indicator at the bottom when loading more
+            if (state.isLoadingMore) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
                 }
             }

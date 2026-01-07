@@ -71,6 +71,10 @@ class SubmitStandupViewModel @Inject constructor(
 
     }
 
+    fun setPreSelectedMember(memberName: String) {
+        _uiState.value = _uiState.value.copy(name = memberName)
+    }
+
     fun onNameChange(v: String) { _uiState.value = _uiState.value.copy(name = v, nameError = false) }
     fun onYesterdayChange(v: String) { _uiState.value = _uiState.value.copy(yesterday = v, yesterdayError = false) }
     fun onTodayChange(v: String) { _uiState.value = _uiState.value.copy(today = v, todayError = false) }

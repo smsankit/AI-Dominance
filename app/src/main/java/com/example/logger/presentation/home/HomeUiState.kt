@@ -10,11 +10,12 @@ data class HomeUiState(
     val date: String = "",
     val roster: List<String> = emptyList(),
     val submissions: List<Standup> = emptyList(),
-    val pending: List<String> = emptyList(),
+    val pending: List<String> = emptyList(), // Names of pending members (from loaded data)
+    val pendingCount: Int = 0, // Accurate count from totalElements (roster.size - totalEntries)
     val lastUpdated: String = "",
     val standupEntries: List<StandupEntryData> = emptyList(),
     val currentPage: Int = 0,
-    val pageSize: Int = 20,
+    val pageSize: Int = 10, // Page size for pagination (20 items per page)
     val totalEntries: Int = 0,
     val totalPages: Int = 0,
     val canLoadMore: Boolean = false

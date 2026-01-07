@@ -17,15 +17,15 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.logger.R
 
 private enum class RootTab(val route: String, val labelRes: Int, val icon: ImageVector) {
-    Home(Destinations.DASHBOARD, R.string.home, Icons.Outlined.Dashboard),
-    Submit(Destinations.SUBMIT_STANDUP, R.string.submit, Icons.Outlined.EditNote),
+    Home(Destinations.DASHBOARD_BASE, R.string.home, Icons.Outlined.Dashboard),
+    Submit(Destinations.SUBMIT_STANDUP_BASE, R.string.submit, Icons.Outlined.EditNote),
     History(Destinations.HISTORY, R.string.history, Icons.AutoMirrored.Outlined.EventNote),
     Settings("settings", R.string.settings, Icons.Outlined.Settings)
 }
 
 private fun mapRouteToTab(route: String?): RootTab = when {
-    route == Destinations.DASHBOARD || route == Destinations.HOME -> RootTab.Home
-    route == Destinations.SUBMIT_STANDUP || (route?.startsWith(Destinations.SUBMIT_CONFIRM) == true) -> RootTab.Submit
+    route == Destinations.DASHBOARD_BASE || route?.startsWith(Destinations.DASHBOARD_BASE) == true || route == Destinations.HOME -> RootTab.Home
+    route == Destinations.SUBMIT_STANDUP_BASE || route?.startsWith(Destinations.SUBMIT_STANDUP_BASE) == true || (route?.startsWith(Destinations.SUBMIT_CONFIRM) == true) -> RootTab.Submit
     route == Destinations.HISTORY -> RootTab.History
     route == Destinations.SETTINGS -> RootTab.Settings
     else -> RootTab.Home
@@ -48,8 +48,8 @@ fun RootScaffold(
             if (isChromeVisible && selectedTab == RootTab.Home) {
                 FloatingActionButton(
                     onClick = {
-                        navController.navigate(Destinations.SUBMIT_STANDUP) {
-                            popUpTo(Destinations.DASHBOARD) { saveState = true }
+                        navController.navigate(Destinations.submitStandup()) {
+                            popUpTo(Destinations.DASHBOARD_BASE) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
@@ -72,11 +72,11 @@ fun RootScaffold(
                                 when (tab) {
                                     RootTab.Home -> {
                                         val current = navController.currentBackStackEntry?.destination?.route
-                                        if (current != Destinations.DASHBOARD) {
-                                            val popped = navController.popBackStack(Destinations.DASHBOARD, inclusive = false)
+                                        if (!current?.startsWith(Destinations.DASHBOARD_BASE)!!) {
+                                            val popped = navController.popBackStack(Destinations.DASHBOARD_BASE, inclusive = false)
                                             if (!popped) {
-                                                navController.navigate(Destinations.DASHBOARD) {
-                                                    popUpTo(Destinations.DASHBOARD) { saveState = true }
+                                                navController.navigate(Destinations.dashboard(refresh = false)) {
+                                                    popUpTo(Destinations.DASHBOARD_BASE) { saveState = true }
                                                     launchSingleTop = true
                                                     restoreState = true
                                                 }
@@ -85,22 +85,22 @@ fun RootScaffold(
                                     }
                                     RootTab.Submit -> {
                                         // Avoid restoreState to guarantee fresh screen after coming from History or Success
-                                        navController.navigate(Destinations.SUBMIT_STANDUP) {
-                                            popUpTo(Destinations.DASHBOARD) { saveState = false }
+                                        navController.navigate(Destinations.submitStandup()) {
+                                            popUpTo(Destinations.DASHBOARD_BASE) { saveState = false }
                                             launchSingleTop = true
                                             restoreState = false
                                         }
                                     }
                                     RootTab.History -> {
                                         navController.navigate(Destinations.HISTORY) {
-                                            popUpTo(Destinations.DASHBOARD) { saveState = true }
+                                            popUpTo(Destinations.DASHBOARD_BASE) { saveState = true }
                                             launchSingleTop = true
                                             restoreState = true
                                         }
                                     }
                                     RootTab.Settings -> {
                                         navController.navigate(Destinations.SETTINGS) {
-                                            popUpTo(Destinations.DASHBOARD) { saveState = true }
+                                            popUpTo(Destinations.DASHBOARD_BASE) { saveState = true }
                                             launchSingleTop = true
                                             restoreState = true
                                         }

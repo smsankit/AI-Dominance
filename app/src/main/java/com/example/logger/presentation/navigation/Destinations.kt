@@ -2,9 +2,13 @@ package com.example.logger.presentation.navigation
 
 object Destinations {
     const val SPLASH = "splash"
-    const val DASHBOARD = "dashboard"
+    const val DASHBOARD_BASE = "dashboard"
+    const val ARG_REFRESH = "refresh"
+    const val DASHBOARD = "$DASHBOARD_BASE?$ARG_REFRESH={$ARG_REFRESH}"
     const val HOME = "home"
-    const val SUBMIT_STANDUP = "submit_standup"
+    const val SUBMIT_STANDUP_BASE = "submit_standup"
+    const val ARG_MEMBER_NAME = "memberName"
+    const val SUBMIT_STANDUP = "$SUBMIT_STANDUP_BASE?$ARG_MEMBER_NAME={$ARG_MEMBER_NAME}"
     const val SUBMIT_CONFIRM_BASE = "submit_confirm"
     const val ARG_TS = "ts"
     const val SUBMIT_CONFIRM = "$SUBMIT_CONFIRM_BASE/{$ARG_TS}"
@@ -15,4 +19,10 @@ object Destinations {
     const val EXPORT = "export"
 
     fun submitConfirm(ts: String) = "$SUBMIT_CONFIRM_BASE/$ts"
+    fun dashboard(refresh: Boolean = false) = "$DASHBOARD_BASE?$ARG_REFRESH=$refresh"
+    fun submitStandup(memberName: String? = null) = if (memberName != null) {
+        "$SUBMIT_STANDUP_BASE?$ARG_MEMBER_NAME=${java.net.URLEncoder.encode(memberName, "UTF-8")}"
+    } else {
+        SUBMIT_STANDUP_BASE
+    }
 }

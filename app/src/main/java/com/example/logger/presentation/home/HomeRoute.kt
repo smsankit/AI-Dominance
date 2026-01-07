@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
@@ -41,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,16 +60,20 @@ import com.example.logger.ui.theme.LoggerTheme
 @Composable
 fun HomeRoute(
     viewModel: HomeViewModel,
+    shouldRefresh: Boolean = false,
     onViewMissing: () -> Unit = {},
     onSubmit: () -> Unit = {},
     onExport: () -> Unit = {},
-    onNavigateExport: () -> Unit = {}, // Add this line
+    onNavigateExport: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    // Refresh data when navigating back to this screen
-    LaunchedEffect(Unit) {
-        viewModel.load()
+    // Refresh data when explicitly requested (from submit success screen)
+    // On first load, ViewModel's init block handles the data loading via fetchTeamMembers() -> load()
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh) {
+            viewModel.load()
+        }
     }
 
     Scaffold(
@@ -93,7 +100,8 @@ fun HomeRoute(
                 onRetry = { viewModel.load() },
                 onViewMissing = onViewMissing,
                 onSubmit = onSubmit,
-                onExport = onNavigateExport, // Use the new navigation lambda
+                onExport = onNavigateExport,
+                onLoadMore = { viewModel.loadMore() }
             )
         }
     }
@@ -106,6 +114,7 @@ private fun HomeScreen(
     onViewMissing: () -> Unit,
     onSubmit: () -> Unit,
     onExport: () -> Unit,
+    onLoadMore: () -> Unit,
 ) {
     when {
         state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -124,41 +133,75 @@ private fun HomeScreen(
             )
             Button(onClick = onRetry) { Text("Retry") }
         }
-        else -> Box(Modifier.fillMaxSize()) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item {
-                    HeroStatCard(
-                        submitted = state.submissions.size,
-                        total = state.roster.size,
-                        lastUpdated = state.lastUpdated
-                    )
-                }
+        else -> {
+            val listState = rememberLazyListState()
 
-                if (state.pending.isNotEmpty()) {
+            // Detect when user reaches the end of the list
+            // Use canLoadMore as a key to restart effect when pagination state changes
+            LaunchedEffect(listState, state.canLoadMore) {
+                snapshotFlow {
+                    val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+                    val totalItems = listState.layoutInfo.totalItemsCount
+                    lastVisibleItem?.index == totalItems - 1 && totalItems > 0
+                }
+                .collect { isAtEnd ->
+                    if (isAtEnd && state.canLoadMore && !state.isLoadingMore) {
+                        onLoadMore()
+                    }
+                }
+            }
+
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     item {
-                        PendingBar(count = state.pending.size, onViewMissing = onViewMissing)
+                        HeroStatCard(
+                            submitted = state.totalEntries, // Use totalEntries from API, not submissions.size
+                            total = state.roster.size,
+                            lastUpdated = state.lastUpdated
+                        )
                     }
-                }
 
-                item {
-                    RowHeader(onExport = onExport)
-                }
+                    if (state.pendingCount > 0) {
+                        item {
+                            PendingBar(count = state.pendingCount, onViewMissing = onViewMissing)
+                        }
+                    }
 
-                if (state.submissions.isEmpty()) {
                     item {
-                        EmptyState()
+                        RowHeader(onExport = onExport)
                     }
-                } else {
-                    items(state.submissions) { s ->
-                        SubmissionCard(s)
-                    }
-                }
 
-                item { Spacer(Modifier.height(96.dp)) }
+                    if (state.submissions.isEmpty()) {
+                        item {
+                            EmptyState()
+                        }
+                    } else {
+                        items(state.submissions) { s ->
+                            SubmissionCard(s)
+                        }
+                    }
+
+                    // Loading indicator at the bottom when loading more
+                    if (state.isLoadingMore) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
+
+                    item { Spacer(Modifier.height(96.dp)) }
+                }
             }
         }
     }
@@ -413,6 +456,7 @@ private fun PreviewDashboardLoading() {
             onViewMissing = {},
             onSubmit = {},
             onExport = {},
+            onLoadMore = {},
         )
     }
 }
@@ -427,6 +471,7 @@ private fun PreviewDashboardError() {
             onViewMissing = {},
             onSubmit = {},
             onExport = {},
+            onLoadMore = {},
         )
     }
 }
@@ -456,6 +501,7 @@ private fun PreviewDashboardData() {
             onViewMissing = {},
             onSubmit = {},
             onExport = {},
+            onLoadMore = {},
         )
     }
 }

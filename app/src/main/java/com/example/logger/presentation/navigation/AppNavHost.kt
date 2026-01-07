@@ -23,7 +23,6 @@ import androidx.navigation.navArgument
 import com.example.logger.presentation.history.HistoryScreen
 import com.example.logger.presentation.settings.SettingsScreen
 import com.example.logger.presentation.roster.RosterScreen
-import androidx.compose.runtime.collectAsState
 import com.example.logger.presentation.missing.MissingScreen
 
 @Composable
@@ -51,10 +50,20 @@ fun AppNavHost() {
             )
         }
         // Wrap the rest inside RootScaffold
-        composable(Destinations.DASHBOARD) {
+        composable(
+            route = Destinations.DASHBOARD,
+            arguments = listOf(
+                navArgument(Destinations.ARG_REFRESH) {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { backStackEntry ->
+            val shouldRefresh = backStackEntry.arguments?.getBoolean(Destinations.ARG_REFRESH) ?: false
             RootScaffold(navController = navController) { padding ->
                 Box(Modifier.padding(padding)) {
                     DashboardScreen(
+                        shouldRefresh = shouldRefresh,
                         onNavigateSubmit = {
                             navController.navigate(Destinations.SUBMIT_STANDUP) {
                                 popUpTo(Destinations.DASHBOARD) { saveState = true }
@@ -93,10 +102,26 @@ fun AppNavHost() {
                 }
             }
         }
-        composable(Destinations.SUBMIT_STANDUP) {
+        composable(
+            route = Destinations.SUBMIT_STANDUP,
+            arguments = listOf(
+                navArgument(Destinations.ARG_MEMBER_NAME) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val memberName = backStackEntry.arguments?.getString(Destinations.ARG_MEMBER_NAME)
             RootScaffold(navController = navController) { padding ->
                 Box(Modifier.padding(padding)) {
                     val vm: SubmitStandupViewModel = hiltViewModel()
+
+                    // Set the pre-selected member name if provided
+                    if (memberName != null) {
+                        vm.setPreSelectedMember(memberName)
+                    }
+
                     SubmitStandupScreen(
                         viewModel = vm,
                         onSubmitted = { ts ->
@@ -121,26 +146,26 @@ fun AppNavHost() {
             route = Destinations.SUBMIT_CONFIRM,
             arguments = listOf(navArgument(Destinations.ARG_TS) { type = NavType.StringType })
         ) { backStackEntry ->
-            RootScaffold(navController = navController) { padding ->
-                val ts = backStackEntry.arguments?.getString(Destinations.ARG_TS) ?: ""
-                SubmitConfirmScreen(
-                    timestamp = ts,
-                    onGoDashboard = {
-                        navController.navigate(Destinations.DASHBOARD) {
-                            popUpTo(Destinations.DASHBOARD) { inclusive = false }
-                            launchSingleTop = true
-                            restoreState = false
-                        }
-                    },
-                    onGoHistory = {
-                        navController.navigate(Destinations.HISTORY) {
-                            popUpTo(Destinations.DASHBOARD) { inclusive = false }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+            // Submit success screen should not show bottom bar or back navigation
+            // Render without RootScaffold to hide chrome
+            val ts = backStackEntry.arguments?.getString(Destinations.ARG_TS) ?: ""
+            SubmitConfirmScreen(
+                timestamp = ts,
+                onGoDashboard = {
+                    navController.navigate(Destinations.dashboard(refresh = true)) {
+                        popUpTo(Destinations.DASHBOARD_BASE) { inclusive = false }
+                        launchSingleTop = true
+                        restoreState = false
                     }
-                )
-            }
+                },
+                onGoHistory = {
+                    navController.navigate(Destinations.HISTORY) {
+                        popUpTo(Destinations.DASHBOARD_BASE) { inclusive = false }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
         }
         composable(Destinations.HISTORY) {
             RootScaffold(navController = navController) { padding ->
@@ -178,15 +203,25 @@ fun AppNavHost() {
             // Render without RootScaffold to hide chrome.
             // Get ViewModel from DASHBOARD backstack entry to avoid unnecessary API calls
             val dashboardEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(Destinations.DASHBOARD)
+                navController.getBackStackEntry(Destinations.DASHBOARD_BASE)
             }
             val homeVm: HomeViewModel = hiltViewModel(dashboardEntry)
             val state = homeVm.uiState.collectAsState()
+
+            // Use pendingCount (accurate from totalElements) to show only actual missing members
+            // No need to load all pages - we already have the accurate count
             MissingScreen(
                 roster = state.value.roster,
-                submittedNames = state.value.submissions.map { it.name },
+                pendingCount = state.value.pendingCount,
+                isLoadingComplete = true,
                 onNavigateBack = { navController.popBackStack() },
-                onSendReminder = { /* TODO: hook reminder send; for now no-op */ }
+                onSubmitStandup = { memberName ->
+                    navController.navigate(Destinations.submitStandup(memberName)) {
+                        popUpTo(Destinations.DASHBOARD_BASE) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = false
+                    }
+                }
             )
         }
         composable(Destinations.EXPORT) {

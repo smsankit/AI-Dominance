@@ -16,13 +16,15 @@ import java.util.Locale
 import javax.inject.Inject
 
 data class HistoryUiState(
-    val selectedDate: Date = Date(),
+    val selectedDate: Date = Calendar.getInstance().apply {
+        add(Calendar.DAY_OF_MONTH, -1)
+    }.time, // Start from yesterday
     val submissions: List<StandupEntryData> = emptyList(),
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val error: String? = null,
     val currentPage: Int = 0,
-    val pageSize: Int = 20,
+    val pageSize: Int = 10,
     val totalItems: Int = 0,
     val totalPages: Int = 0,
     val canLoadMore: Boolean = false
@@ -37,6 +39,11 @@ class HistoryViewModel @Inject constructor(
 
     private val dateKeyFmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
+    // Helper to get yesterday's date for comparison
+    private fun getYesterday(): Date = Calendar.getInstance().apply {
+        add(Calendar.DAY_OF_MONTH, -1)
+    }.time
+
     init { refresh() }
 
     fun onPrevDate() {
@@ -50,8 +57,9 @@ class HistoryViewModel @Inject constructor(
         val cal = Calendar.getInstance().apply { time = _uiState.value.selectedDate }
         cal.add(Calendar.DAY_OF_MONTH, 1)
         val next = cal.time
-        val today = Date()
-        if (dateKeyFmt.format(next) <= dateKeyFmt.format(today)) {
+        val yesterday = getYesterday()
+        // Only allow navigation up to yesterday (not today)
+        if (dateKeyFmt.format(next) <= dateKeyFmt.format(yesterday)) {
             _uiState.value = _uiState.value.copy(selectedDate = next, currentPage = 0)
             refresh(resetList = true)
         }

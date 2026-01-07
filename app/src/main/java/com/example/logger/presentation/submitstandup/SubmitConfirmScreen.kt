@@ -1,5 +1,6 @@
 package com.example.logger.presentation.submitstandup
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Dashboard
@@ -25,6 +26,11 @@ fun SubmitConfirmScreen(
     onGoDashboard: () -> Unit,
     onGoHistory: () -> Unit
 ) {
+    // Disable system back press - users must choose Dashboard or History
+    BackHandler(enabled = true) {
+        // Do nothing - intercept and ignore back press
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
