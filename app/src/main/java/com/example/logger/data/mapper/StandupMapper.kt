@@ -63,4 +63,3 @@ fun PaginatedStandupEntriesDto.toDomain() = PaginatedStandupEntriesData(
     items = data.map { it.toDomain() },
     meta = meta.toDomain()
 )
-

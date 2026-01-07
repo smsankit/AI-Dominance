@@ -8,9 +8,7 @@ import retrofit2.http.Query
 interface TeamApiService {
     @GET("teams/{teamId}/members")
     suspend fun getTeamMembers(
-        @Path("teamId") teamId: Long,
-        @Query("page") page: Int,
-        @Query("size") size: Int
+        @Path("teamId") teamId: Long
     ): TeamMembersResponseDto
 }
 

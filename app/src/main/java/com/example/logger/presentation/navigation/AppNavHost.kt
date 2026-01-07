@@ -1,5 +1,6 @@
 package com.example.logger.presentation.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -97,6 +98,7 @@ fun AppNavHost() {
                     SubmitStandupScreen(
                         viewModel = vm,
                         onSubmitted = { ts ->
+                            Log.e("AppNavHost", "Navigating to SubmitConfirm with ts=$ts")
                             navController.navigate(Destinations.submitConfirm(ts)) {
                                 // Remove Submit from back stack so back from Success doesn’t return to Submit
                                 popUpTo(Destinations.DASHBOARD) { saveState = true }
@@ -122,16 +124,15 @@ fun AppNavHost() {
                 SubmitConfirmScreen(
                     timestamp = ts,
                     onGoDashboard = {
-                        navController.navigate(Destinations.DASHBOARD) {
-                            // Clear Success from back stack by popping to Dashboard
-                            popUpTo(Destinations.DASHBOARD) { saveState = true }
+                        navController.navigate(Destinations.HOME) {
+                            popUpTo(Destinations.HOME) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
                     },
                     onGoHistory = {
                         navController.navigate(Destinations.HISTORY) {
-                            popUpTo(Destinations.DASHBOARD) { saveState = true }
+                            popUpTo(Destinations.HOME) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }

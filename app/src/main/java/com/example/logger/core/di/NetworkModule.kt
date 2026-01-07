@@ -46,7 +46,7 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("BaseUrl")
-    fun provideBaseUrl(): String = "https://randolph-tongued-nondistributively.ngrok-free.dev/standuploggerservices/" // Mocked by interceptor
+    fun provideBaseUrl(): String = "https://78e02cbf5f53.ngrok-free.app/standuploggerservices/" // Mocked by interceptor
 
     @Provides
     @Singleton

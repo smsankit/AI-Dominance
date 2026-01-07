@@ -16,7 +16,7 @@ class TeamRepositoryImpl @Inject constructor(
 ) : TeamRepository {
     override fun getTeamMembers(teamId: Long, page: Int, size: Int): Flow<NetworkResult<List<TeamMemberData>>> =
         flow {
-            val result = safeNetworkCall { api.getTeamMembers(teamId, page, size) }
+            val result = safeNetworkCall { api.getTeamMembers(teamId) }
             when (result) {
                 is NetworkResult.Success -> {
                     val members = result.data.items.map { teamMemberDtoMapper.map(it) }

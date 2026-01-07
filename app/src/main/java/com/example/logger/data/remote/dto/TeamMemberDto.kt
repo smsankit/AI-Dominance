@@ -13,7 +13,7 @@ data class TeamMemberDto(
 
 // DTO for the paged response
 data class TeamMembersResponseDto(
-    @SerializedName("items") val items: List<TeamMemberDto>,
+    @SerializedName("data") val items: List<TeamMemberDto>,
     @SerializedName("meta") val meta: MetaDto
 )
 

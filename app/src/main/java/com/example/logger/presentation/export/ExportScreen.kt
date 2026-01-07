@@ -39,18 +39,20 @@ fun ExportScreen(
         uiState.standupEntries.map { entry ->
             ExportStandupUiModel(
                 name = "Team Member #${entry.teamMemberId}",
-                time = try {
-                    val dateTimeFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-                    val date = dateTimeFormat.parse(entry.createdAt)
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                    date?.let { timeFormat.format(it) } ?: entry.createdAt
-                } catch (e: Exception) {
-                    entry.createdAt.substringAfter("T").substringBefore(".")
-                },
+                time = entry.createdAt?.let {
+                    try {
+                        val dateTimeFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                        val date = dateTimeFormat.parse(it)
+                        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                        date?.let { d -> timeFormat.format(d) } ?: it
+                    } catch (e: Exception) {
+                        it.substringAfter("T").substringBefore(".")
+                    }
+                } ?: "",
                 yesterday = entry.yesterdayWork,
                 today = entry.todayPlan,
                 blockers = entry.blockers,
-                editedAt = null
+                editedAt = entry.updatedAt
             )
         }
     }

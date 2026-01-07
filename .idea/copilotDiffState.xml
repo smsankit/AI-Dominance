@@ -3,15 +3,6 @@
   <component name="CopilotDiffPersistence">
     <option name="pendingDiffs">
       <map>
-        <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/network/SafeCall.kt">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/example/logger/core/network/SafeCall.kt" />
-              <option name="originalContent" value="package com.example.logger.core.network&#10;&#10;import com.example.logger.core.exception.AppException&#10;import retrofit2.HttpException&#10;import java.io.IOException&#10;&#10;suspend inline fun &lt;T&gt; safeApiCall(crossinline block: suspend () -&gt; T): T {&#10;    try {&#10;        return block()&#10;    } catch (e: IOException) {&#10;        throw AppException.Network(message = e.message, cause = e)&#10;    } catch (e: HttpException) {&#10;        throw AppException.Server(message = e.message(), cause = e)&#10;    } catch (e: AppException) {&#10;        throw e&#10;    } catch (e: Throwable) {&#10;        throw AppException.Unknown(message = e.message, cause = e)&#10;    }&#10;}&#10;&#10;" />
-              <option name="updatedContent" value="package com.example.logger.core.network&#13;&#10;&#13;&#10;import com.example.logger.core.exception.AppException&#13;&#10;import retrofit2.HttpException&#13;&#10;import java.io.IOException&#13;&#10;&#13;&#10;suspend inline fun &lt;T&gt; safeApiCall(crossinline block: suspend () -&gt; T): T {&#13;&#10;    try {&#13;&#10;        return block()&#13;&#10;    } catch (e: IOException) {&#13;&#10;        throw AppException.Network(message = e.message, cause = e)&#13;&#10;    } catch (e: HttpException) {&#13;&#10;        throw AppException.Server(message = e.message(), cause = e)&#13;&#10;    } catch (e: AppException) {&#13;&#10;        throw e&#13;&#10;    } catch (e: Throwable) {&#13;&#10;        throw AppException.Unknown(message = e.message, cause = e)&#13;&#10;    }&#13;&#10;}&#13;&#10;&#13;&#10;suspend inline fun &lt;T&gt; safeNetworkCall(crossinline block: suspend () -&gt; T): NetworkResult&lt;T&gt; = try {&#13;&#10;    NetworkResult.Success(safeApiCall { block() })&#13;&#10;} catch (e: AppException) {&#13;&#10;    NetworkResult.Error(message = e.message, throwable = e)&#13;&#10;} catch (e: Throwable) {&#13;&#10;    NetworkResult.Error(message = e.message, throwable = e)&#13;&#10;}" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
         <entry key="$PROJECT_DIR$/app/src/main/java/com/example/logger/data/remote/mapper/TeamMemberDtoMapper.kt">
           <value>
             <PendingDiffInfo>

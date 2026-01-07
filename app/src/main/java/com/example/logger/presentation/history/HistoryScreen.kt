@@ -237,7 +237,7 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                         val date = dateTimeFormat.parse(s.createdAt)
                         date?.let { timeFormat.format(it) } ?: s.createdAt
                     } catch (e: Exception) {
-                        s.createdAt.substringAfter("T").substringBefore(".")
+                        s.createdAt?.substringAfter("T")?.substringBefore(".")
                     }
 
                     ElevatedCard(elevation = CardDefaults.elevatedCardElevation(4.dp)) {

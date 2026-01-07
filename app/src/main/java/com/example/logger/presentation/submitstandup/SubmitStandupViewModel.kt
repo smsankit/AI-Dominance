@@ -1,8 +1,11 @@
 package com.example.logger.presentation.submitstandup
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.logger.core.datastore.PreferencesManager
 import com.example.logger.core.network.NetworkResult
+import com.example.logger.domain.usecase.GetTeamMembersUseCase
 import com.example.logger.domain.usecase.SubmitStandupUseCase
 import com.example.logger.presentation.submitstandup.mapper.SubmitStandupUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +18,7 @@ import java.util.Locale
 import javax.inject.Inject
 
 data class SubmitStandupUiState(
-    val name: String = "Ankit",
+    val name: String = "",
     val yesterday: String = "",
     val today: String = "",
     val blockers: String = "",
@@ -36,7 +39,9 @@ sealed interface SubmitStandupUiEvent {
 @HiltViewModel
 class SubmitStandupViewModel @Inject constructor(
     private val submitUseCase: SubmitStandupUseCase,
-    private val uiMapper: SubmitStandupUiMapper
+    private val uiMapper: SubmitStandupUiMapper,
+    private val getTeamMembersUseCase: GetTeamMembersUseCase,
+    private val preferencesManager : PreferencesManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SubmitStandupUiState())
     val uiState: StateFlow<SubmitStandupUiState> = _uiState
@@ -45,28 +50,24 @@ class SubmitStandupViewModel @Inject constructor(
 
     init {
         // Fetch team members via use case returning NetworkResult and set roster
-        _uiState.value = _uiState.value.copy(
-                            roster = listOf<String>("Ankit Kumar", "Ashokkumar R", "Anurag", "Paras"),
-                            name = "Ashokkumar R"
-                        )
 
-//        viewModelScope.launch {
-//            getTeamMembersUseCase(1, 1, 20).collect { result ->
-//                when (result) {
-//                    is com.example.logger.core.network.NetworkResult.Success -> {
-//                        val names = result.data.map { it.name }
-//                        _uiState.value = _uiState.value.copy(
-//                            roster = names,
-//                            name = if (_uiState.value.name.isBlank() && names.isNotEmpty()) names.first() else _uiState.value.name
-//                        )
-//                    }
-//                    is com.example.logger.core.network.NetworkResult.Error -> {
-//                        // Keep existing roster, optionally set error message
-//                        _uiState.value = _uiState.value.copy(error = result.message)
-//                    }
-//                }
-//            }
-//        }
+        viewModelScope.launch {
+            getTeamMembersUseCase(1, 1, 20).collect { result ->
+                when (result) {
+                    is com.example.logger.core.network.NetworkResult.Success -> {
+                        val names = result.data.map { it.name }
+                        _uiState.value = _uiState.value.copy(
+                            roster = names,
+                            name = if (_uiState.value.name.isBlank() && names.isNotEmpty()) names.first() else _uiState.value.name
+                        )
+                    }
+                    is com.example.logger.core.network.NetworkResult.Error -> {
+                        // Keep existing roster, optionally set error message
+                        _uiState.value = _uiState.value.copy(error = result.message)
+                    }
+                }
+            }
+        }
 
     }
 
@@ -94,9 +95,8 @@ class SubmitStandupViewModel @Inject constructor(
         viewModelScope.launch {
             // Resolve team member id from cached preferences by name
             val sNow = _uiState.value
-//            val list = preferencesManager.getTeamMembers().first()
-//            val teamMemberId = list.firstOrNull { it.name == sNow.name }?.id ?: 0
-            val teamMemberId = 4L
+            val list = preferencesManager.getTeamMembers().first()
+            val teamMemberId = list.firstOrNull { it.name == sNow.name }?.id ?: 0
             val standupDate = try { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) } catch (_: Throwable) { "" }
             val request = uiMapper.toRequest(
                 state = sNow,
@@ -107,6 +107,7 @@ class SubmitStandupViewModel @Inject constructor(
             val result = submitUseCase(request)
             when (result) {
                 is NetworkResult.Success -> {
+                    Log.e("SubmitStandupViewModel", "Submission successful: ${result.data}")
                     val ts = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
                     _uiState.value = _uiState.value.copy(
                         isSubmitting = false,
@@ -124,6 +125,7 @@ class SubmitStandupViewModel @Inject constructor(
                     onSuccess(ts)
                 }
                 is NetworkResult.Error -> {
+                    Log.e("SubmitStandupViewModel", "Submission failed: ${result.message}")
                     _uiState.value = _uiState.value.copy(isSubmitting = false, error = result.message ?: "Submission failed")
                     _events.send(SubmitStandupUiEvent.ApiError(_uiState.value.error ?: "Submission failed"))
                 }

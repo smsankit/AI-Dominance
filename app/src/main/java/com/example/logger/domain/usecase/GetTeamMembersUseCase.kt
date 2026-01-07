@@ -13,10 +13,10 @@ class GetTeamMembersUseCase @Inject constructor(
     private val repository: TeamRepository,
     private val preferencesManager: PreferencesManager
 ) {
-    operator fun invoke(teamId: Long, page: Int, size: Int): Flow<NetworkResult<List<TeamMemberData>>> = flow {
+    operator fun invoke(teamId: Long, page: Int, size: Int, isApiCallRequired : Boolean = false): Flow<NetworkResult<List<TeamMemberData>>> = flow {
         // Try cache first
         val cached = preferencesManager.getTeamMembers().first()
-        if (cached.isNotEmpty()) {
+        if (cached.isNotEmpty() && !isApiCallRequired) {
             emit(NetworkResult.Success(cached))
             return@flow
         }

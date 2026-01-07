@@ -40,7 +40,7 @@ fun SubmitStandupScreen(
         viewModel.events.collect { evt ->
             when (evt) {
                 is SubmitStandupUiEvent.ApiError -> snackbarHostState.showSnackbar(evt.message)
-                SubmitStandupUiEvent.Submitted -> { /* navigation handled by callback */ }
+                SubmitStandupUiEvent.Submitted -> snackbarHostState.showSnackbar("Standup submitted successfully.")
             }
         }
     }
@@ -174,4 +174,3 @@ fun SubmitStandupScreen(
         }
     }
 }
-
