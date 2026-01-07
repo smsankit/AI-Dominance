@@ -33,7 +33,12 @@ class HomeViewModel @Inject constructor(
 
     private fun fetchTeamMembers() {
         viewModelScope.launch {
-            getTeamMembers(1, 0, 20, true).collect { /* No-op or update state if needed */ }
+            getTeamMembers(1, 0, 20, true).collect { result ->
+                if (result is NetworkResult.Success) {
+                    val members = result.data
+                    _uiState.update { it.copy(roster = members.map { m -> m.name }) }
+                }
+            }
         }
     }
 
