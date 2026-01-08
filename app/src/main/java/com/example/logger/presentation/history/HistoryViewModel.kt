@@ -3,16 +3,15 @@ package com.example.logger.presentation.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.network.NetworkResult
+import com.example.logger.core.util.DateFormatter
 import com.example.logger.domain.model.StandupEntryData
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 
 data class HistoryUiState(
@@ -37,27 +36,33 @@ class HistoryViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState
 
-    private val dateKeyFmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-
     // Helper to get yesterday's date for comparison
     private fun getYesterday(): Date = Calendar.getInstance().apply {
+        timeZone = DateFormatter.istTimeZone
         add(Calendar.DAY_OF_MONTH, -1)
     }.time
 
     init { refresh() }
 
     fun onPrevDate() {
-        val cal = Calendar.getInstance().apply { time = _uiState.value.selectedDate }
+        val cal = Calendar.getInstance().apply {
+            timeZone = DateFormatter.istTimeZone
+            time = _uiState.value.selectedDate
+        }
         cal.add(Calendar.DAY_OF_MONTH, -1)
         _uiState.value = _uiState.value.copy(selectedDate = cal.time, currentPage = 0)
         refresh(resetList = true)
     }
 
     fun onNextDate() {
-        val cal = Calendar.getInstance().apply { time = _uiState.value.selectedDate }
+        val cal = Calendar.getInstance().apply {
+            timeZone = DateFormatter.istTimeZone
+            time = _uiState.value.selectedDate
+        }
         cal.add(Calendar.DAY_OF_MONTH, 1)
         val next = cal.time
         val yesterday = getYesterday()
+        val dateKeyFmt = DateFormatter.getApiDateFormat()
         // Only allow navigation up to yesterday (not today)
         if (dateKeyFmt.format(next) <= dateKeyFmt.format(yesterday)) {
             _uiState.value = _uiState.value.copy(selectedDate = next, currentPage = 0)
@@ -87,7 +92,7 @@ class HistoryViewModel @Inject constructor(
             }
 
             val currentState = _uiState.value
-            val dateStr = dateKeyFmt.format(currentState.selectedDate)
+            val dateStr = DateFormatter.getApiDateFormat().format(currentState.selectedDate)
             val result = getTodayStandup(
                 teamId = 1, // Using hardcoded teamId for now
                 page = currentState.currentPage,

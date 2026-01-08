@@ -1,5 +1,6 @@
 package com.example.logger.data.mapper
 
+import com.example.logger.core.util.DateFormatter
 import com.example.logger.data.remote.dto.PaginatedStandupEntriesDto
 import com.example.logger.data.remote.dto.PaginationMetaDto
 import com.example.logger.data.remote.dto.StandupDto
@@ -36,8 +37,8 @@ fun StandupEntryResponseDto.toDomain() = StandupEntryData(
     blockers = blockers,
     teamMemberId = teamMemberId,
     teamId = teamId,
-    createdAt = createdAt,
-    updatedAt = updatedAt
+    createdAt = DateFormatter.parseToTimeString(createdAt),
+    updatedAt = DateFormatter.parseToTimeString(updatedAt)
 )
 
 fun StandupEntryDto.toDomain() = StandupEntryData(
@@ -48,8 +49,8 @@ fun StandupEntryDto.toDomain() = StandupEntryData(
     blockers = blockers,
     teamMemberId = teamMemberId,
     teamId = teamId,
-    createdAt = createdAt,
-    updatedAt = updatedAt
+    createdAt = DateFormatter.parseToTimeString(createdAt),
+    updatedAt = DateFormatter.parseToTimeString(updatedAt)
 )
 
 fun PaginationMetaDto.toDomain() = PaginationMetaData(

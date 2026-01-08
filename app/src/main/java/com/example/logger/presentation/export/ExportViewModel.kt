@@ -6,6 +6,7 @@ import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.network.NetworkResult
+import com.example.logger.core.util.DateFormatter
 import com.example.logger.domain.model.StandupEntryData
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,9 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Locale
 import javax.inject.Inject
 
 data class ExportUiState(
@@ -39,11 +38,9 @@ class ExportViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ExportUiState())
     val uiState: StateFlow<ExportUiState> = _uiState
 
-    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-
     init {
-        // Initialize with today's date
-        val today = dateFormatter.format(Calendar.getInstance().time)
+        // Initialize with today's date (IST)
+        val today = DateFormatter.getCurrentDateString()
         _uiState.value = _uiState.value.copy(selectedDate = today)
         loadStandups(today)
     }

@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.logger.R
-import java.text.SimpleDateFormat
+import com.example.logger.core.util.DateFormatter
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,11 +34,12 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
     val state by vm.uiState.collectAsState()
     val context = LocalContext.current
 
-    val inputFormat = remember { SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()) }
-    val displayFormat = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
-    // Calculate yesterday's date for max date validation
+    val inputFormat = remember { DateFormatter.getInputDateFormat() }
+    val displayFormat = remember { DateFormatter.getDisplayDateFormat() }
+    // Calculate yesterday's date for max date validation (IST timezone)
     val yesterdayMillis = remember {
         Calendar.getInstance().apply {
+            timeZone = DateFormatter.istTimeZone
             add(Calendar.DAY_OF_MONTH, -1)
             set(Calendar.HOUR_OF_DAY, 23)
             set(Calendar.MINUTE, 59)
@@ -47,8 +48,9 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
     }
     // Yesterday key for next button validation
     val yesterdayKey = remember {
-        SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(
+        DateFormatter.getCompactDateFormat().format(
             Calendar.getInstance().apply {
+                timeZone = DateFormatter.istTimeZone
                 add(Calendar.DAY_OF_MONTH, -1)
             }.time
         )
@@ -184,10 +186,7 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
 
                             CircleArrowButton(
                                 icon = Icons.Outlined.ArrowForward,
-                                enabled = SimpleDateFormat(
-                                    "yyyyMMdd",
-                                    Locale.getDefault()
-                                ).format(state.selectedDate) != yesterdayKey,
+                                enabled = DateFormatter.getCompactDateFormat().format(state.selectedDate) != yesterdayKey,
                                 onClick = { vm.onNextDate() }
                             )
                         }
@@ -264,15 +263,8 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                         (s.blockers ?: "").trim().isNotEmpty() &&
                                 (s.blockers ?: "").lowercase() != "none"
 
-                    // Format time from createdAt timestamp
-                    val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
-                    val dateTimeFormat = remember { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()) }
-                    val submittedTime = try {
-                        val date = dateTimeFormat.parse(s.createdAt)
-                        date?.let { timeFormat.format(it) } ?: s.createdAt
-                    } catch (e: Exception) {
-                        s.createdAt?.substringAfter("T")?.substringBefore(".")
-                    }
+                    // Time is already formatted in IST by the mapper (HH:mm format)
+                    val submittedTime = s.createdAt ?: "--:--"
 
                     ElevatedCard(elevation = CardDefaults.elevatedCardElevation(4.dp)) {
                         Row(modifier = Modifier.height(IntrinsicSize.Min)) {

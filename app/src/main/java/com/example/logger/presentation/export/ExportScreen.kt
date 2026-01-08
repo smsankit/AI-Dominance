@@ -52,7 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.logger.R
-import java.text.SimpleDateFormat
+import com.example.logger.core.util.DateFormatter
 import java.util.Calendar
 import java.util.Locale
 
@@ -68,20 +68,12 @@ fun ExportScreen(
     var showDatePicker by remember { mutableStateOf(false) }
 
     // Convert StandupEntryData to ExportStandupUiModel
+    // Time is already formatted in IST by the mapper (HH:mm format)
     val standups = remember(uiState.standupEntries) {
         uiState.standupEntries.map { entry ->
             ExportStandupUiModel(
                 name = "Team Member #${entry.teamMemberId}",
-                time = entry.createdAt?.let {
-                    try {
-                        val dateTimeFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-                        val date = dateTimeFormat.parse(it)
-                        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                        date?.let { d -> timeFormat.format(d) } ?: it
-                    } catch (e: Exception) {
-                        it.substringAfter("T").substringBefore(".")
-                    }
-                } ?: "",
+                time = entry.createdAt ?: "--:--",
                 yesterday = entry.yesterdayWork,
                 today = entry.todayPlan,
                 blockers = entry.blockers,

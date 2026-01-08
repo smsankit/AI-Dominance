@@ -3,6 +3,7 @@ package com.example.logger.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.network.NetworkResult
+import com.example.logger.core.util.DateFormatter
 import com.example.logger.domain.model.Standup
 import com.example.logger.domain.usecase.GetTeamMembersUseCase
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
@@ -11,9 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,7 +23,6 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
     val uiState: StateFlow<HomeUiState> = _uiState
 
-    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
     // Map to store team member id to name mapping
     private val teamMembersMap = mutableMapOf<Long, String>()
@@ -69,8 +66,8 @@ class HomeViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoadingMore = true, error = null) }
             }
 
-            // Get today's date in yyyy-MM-dd format
-            val todayDate = dateFormatter.format(Date())
+            // Get today's date in yyyy-MM-dd format (IST)
+            val todayDate = DateFormatter.getCurrentDateString()
             val currentState = _uiState.value
 
             val result = getTodayStandup(
@@ -90,15 +87,10 @@ class HomeViewModel @Inject constructor(
                     }
 
                     // Map StandupEntryData to Standup model for UI
+                    // createdAt and updatedAt are already formatted to time strings (HH:mm) in the mapper
                     val mappedSubmissions = updatedEntries.map { entry ->
                         val memberName = teamMembersMap[entry.teamMemberId] ?: "Team Member #${entry.teamMemberId}"
-                        val time = try {
-                            // Parse createdAt timestamp (format: "yyyy-MM-dd HH:mm:ss")
-                            val parts = entry.createdAt?.split(" ")
-                            parts?.getOrNull(1)?.substring(0, 5) ?: "--:--"
-                        } catch (_: Exception) {
-                            "--:--"
-                        }
+                        val time = entry.createdAt ?: "--:--"
 
                         Standup(
                             id = entry.id.toString(),
@@ -160,9 +152,5 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun nowTime(): String = try {
-        SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-    } catch (_: Throwable) {
-        "--:--"
-    }
+    private fun nowTime(): String = DateFormatter.getCurrentTimeString()
 }

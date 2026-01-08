@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.datastore.PreferencesManager
 import com.example.logger.core.network.NetworkResult
+import com.example.logger.core.util.DateFormatter
 import com.example.logger.domain.usecase.GetTeamMembersUseCase
 import com.example.logger.domain.usecase.SubmitStandupUseCase
 import com.example.logger.presentation.submitstandup.mapper.SubmitStandupUiMapper
@@ -12,9 +13,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 
 data class SubmitStandupUiState(
@@ -101,7 +99,7 @@ class SubmitStandupViewModel @Inject constructor(
             val sNow = _uiState.value
             val list = preferencesManager.getTeamMembers().first()
             val teamMemberId = list.firstOrNull { it.name == sNow.name }?.id ?: 0
-            val standupDate = try { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) } catch (_: Throwable) { "" }
+            val standupDate = DateFormatter.getCurrentDateString()
             val request = uiMapper.toRequest(
                 state = sNow,
                 standupDate = standupDate,
@@ -112,7 +110,7 @@ class SubmitStandupViewModel @Inject constructor(
             when (result) {
                 is NetworkResult.Success -> {
                     Log.e("SubmitStandupViewModel", "Submission successful: ${result.data}")
-                    val ts = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+                    val ts = DateFormatter.getCurrentTimeString()
                     _uiState.value = _uiState.value.copy(
                         isSubmitting = false,
                         submittedAt = ts,
