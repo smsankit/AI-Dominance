@@ -250,3 +250,69 @@ Feature: SubmitStandup
 **Suggestion:** Added Testing section to `develop.md` detailing dependencies, commands (`./gradlew test`, `./gradlew testDebugUnitTest`, and filtering), and best practices (Robolectric, Dispatchers.Main, Turbine, `advanceUntilIdle`).
 **Action:** Accepted
 **Reasoning:** Provides clear guidance for contributors to run and maintain tests reliably.
+
+### Interaction 38
+**Prompt/Context:** Update ExportViewModel tests for new state handling and error mapping.
+**Suggestion:** Refactored tests to match updated ViewModel logic: initial loading, date change, load more, and error states.
+**Action:** Accepted
+**Reasoning:** Ensures tests reflect current implementation and validates critical paths.
+
+### Interaction 39
+**Prompt/Context:** Write test cases for ExportStandupEntryViewModel covering all branches.
+**Suggestion:** Added tests for ExportStandupEntryViewModel: initial state, export success, failure, and CSV content verification.
+**Action:** Accepted
+**Reasoning:** Confirms ViewModel behavior for export feature, ensuring reliability.
+
+### Interaction 40
+**Prompt/Context:** Write test cases for HistoryViewModel covering all branches.
+**Suggestion:** Added tests for HistoryViewModel: initial state, date filter change, pagination, and error handling.
+**Action:** Accepted
+**Reasoning:** Ensures HistoryViewModel functions correctly across scenarios.
+
+### Interaction 41
+**Prompt/Context:** Write test cases for HomeViewModel covering all branches.
+**Suggestion:** Added tests for HomeViewModel: initial state, cached data use, API fetch, error handling, and refresh behavior.
+**Action:** Accepted
+**Reasoning:** Confirms HomeViewModel operates as expected in all situations.
+
+### Interaction 42
+**Prompt/Context:** Write test cases for StandupEntryViewModel covering all branches.
+**Suggestion:** Added tests for StandupEntryViewModel: initial state, form validation, submission success, and error handling.
+**Action:** Accepted
+**Reasoning:** Ensures StandupEntryViewModel behaves correctly for entry submission.
+
+### Interaction 43
+**Prompt/Context:** Write test cases for TeamMemberItemViewModel covering all branches.
+**Suggestion:** Added tests for TeamMemberItemViewModel: initial state, roster loading, and error handling.
+**Action:** Accepted
+**Reasoning:** Confirms TeamMemberItemViewModel functions properly for roster management.
+
+### Interaction 44
+**Prompt/Context:** Update today’s failing ExportViewModel tests and align with SubmitStandupViewModel test setup.
+**Suggestion:** Set Dispatchers.Main via UnconfinedTestDispatcher, use Robolectric runner, advance coroutines with advanceUntilIdle, and stub use cases to emit success/error results covered by the ViewModel’s when branches.
+**Action:** Accepted
+**Reasoning:** Establishes deterministic coroutine execution and ensures branches are exercised, resolving NoWhenBranchMatchedException and assertion mismatches.
+
+### Interaction 45
+**Prompt/Context:** Fix four failing cases in ExportViewModelTest: initial load, date change, loadMore append, and error state.
+**Suggestion:** Mock use case to return paged results for the selected date, toggle canLoadMore based on page size, clear state on date change before reloading, and surface error messages from Result.Error to uiState.error.
+**Action:** Accepted
+**Reasoning:** Aligns tests with expected ViewModel behavior, validates pagination and error propagation.
+
+### Interaction 46
+**Prompt/Context:** Write and stabilize testcases for SubmitStandupViewModel with success + reset fields + snackbar event, 409 conflict mapping, and roster count update.
+**Suggestion:** Add tests verifying Submitted event triggers snackbar message, text fields cleared on success, map 409 error JSON to user-friendly message, and roster reflects team member size after getTeamMembers call.
+**Action:** Accepted
+**Reasoning:** Covers critical UX flows and domain error handling.
+
+### Interaction 47
+**Prompt/Context:** Add full coverage tests for HistoryViewModel and HomeViewModel mirroring ExportViewModel patterns.
+**Suggestion:** HistoryViewModel: initial load, pagination, date filtering, empty and error states. HomeViewModel: cached vs API fetch, success state update, error propagation, and refresh behavior.
+**Action:** Accepted
+**Reasoning:** Ensures reliable behavior across view models with clean architecture flows.
+
+### Interaction 48
+**Prompt/Context:** Document Windows PowerShell test commands and best practices in develop.md.
+**Suggestion:** Include commands for running targeted tests and global suites, and note using Robolectric, Dispatchers.setMain/resetMain, and advanceUntilIdle in tests.
+**Action:** Accepted
+**Reasoning:** Provides repeatable guidance for contributors to run and debug tests locally.
