@@ -1,6 +1,8 @@
 package com.example.logger.presentation.missing
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -17,17 +19,11 @@ import com.example.logger.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MissingScreen(
-    roster: List<String>,
-    pendingCount: Int,
-    isLoadingComplete: Boolean = true,
+    pendingMembers: List<String>, // Actual list of members who haven't submitted
     onNavigateBack: () -> Unit,
     onSubmitStandup: (String) -> Unit // Pass member name
 ) {
-    // Calculate pending members from roster minus the submitted count
-    // Since we don't have exact names, show first N members as "potentially missing"
-    // This is a limitation without loading all data
-    val totalSubmitted = roster.size - pendingCount
-    val pending = roster.take(pendingCount) // Simplified - shows first N as pending
+    val pendingCount = pendingMembers.size
 
     Scaffold(
         topBar = {
@@ -48,7 +44,7 @@ fun MissingScreen(
                 Text(text = stringResource(R.string.missing_members_count, pendingCount, suffix), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
-            if (pending.isEmpty()) {
+            if (pendingMembers.isEmpty()) {
                 Column(modifier = Modifier.fillMaxWidth().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("🎉", style = MaterialTheme.typography.displaySmall)
                     Spacer(Modifier.height(8.dp))
@@ -56,28 +52,33 @@ fun MissingScreen(
                     Text(stringResource(R.string.missing_empty_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
-                pending.forEach { name ->
-                    ElevatedCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
-                    ) {
-                        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            val initials = name.split(" ").mapNotNull { it.firstOrNull()?.toString() }.take(2).joinToString("")
-                            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
-                                Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-                                    Text(initials, color = MaterialTheme.colorScheme.primary)
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(pendingMembers) { name ->
+                        ElevatedCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
+                        ) {
+                            Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                val initials = name.split(" ").mapNotNull { it.firstOrNull()?.toString() }.take(2).joinToString("")
+                                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
+                                    Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                                        Text(initials, color = MaterialTheme.colorScheme.primary)
+                                    }
                                 }
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(name, style = MaterialTheme.typography.titleMedium)
-                                Text(stringResource(R.string.missing_row_subtitle), style = MaterialTheme.typography.bodySmall, color = Color(0xFFD32F2F))
-                            }
-                            Button(onClick = { onSubmitStandup(name) }) {
-                                Icon(Icons.Outlined.EditNote, contentDescription = null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Submit")
+                                Spacer(Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(name, style = MaterialTheme.typography.titleMedium)
+                                    Text(stringResource(R.string.missing_row_subtitle), style = MaterialTheme.typography.bodySmall, color = Color(0xFFD32F2F))
+                                }
+                                Button(onClick = { onSubmitStandup(name) }) {
+                                    Icon(Icons.Outlined.EditNote, contentDescription = null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Submit")
+                                }
                             }
                         }
                     }

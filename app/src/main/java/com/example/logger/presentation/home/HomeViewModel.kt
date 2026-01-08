@@ -49,7 +49,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun load(resetList: Boolean = true) {
+    fun load(resetList: Boolean = true, fetchAllStandups: Boolean = false) {
         viewModelScope.launch {
             // Only show full loading if team members haven't been loaded yet
             val showFullLoading = teamMembersMap.isEmpty()
@@ -70,10 +70,14 @@ class HomeViewModel @Inject constructor(
             val todayDate = DateFormatter.getCurrentDateString()
             val currentState = _uiState.value
 
+            // If fetchAllStandups is true, use a large size to get all in one call
+            val pageSize = if (fetchAllStandups) 100 else currentState.pageSize
+            val page = if (fetchAllStandups) 0 else currentState.currentPage
+
             val result = getTodayStandup(
                 teamId = 1, // Using hardcoded teamId for now
-                page = currentState.currentPage,
-                size = currentState.pageSize,
+                page = page,
+                size = pageSize,
                 standupDate = todayDate
             )
 
@@ -109,8 +113,8 @@ class HomeViewModel @Inject constructor(
                     val totalTeamMembers = teamMembersMap.size
                     val pendingCount = totalTeamMembers - totalSubmitted
 
-                    // For the pending list, we can only show names for members we know haven't submitted
-                    // based on loaded data. The actual count is based on totalElements.
+                    // For the pending list, calculate based on ALL loaded entries across pagination
+                    // This gives us an accurate list of who hasn't submitted based on what we've loaded so far
                     val submittedMemberIds = updatedEntries.map { it.teamMemberId }.toSet()
                     val pendingMembers = teamMembersMap.filterKeys { it !in submittedMemberIds }.values.toList()
 
@@ -151,6 +155,7 @@ class HomeViewModel @Inject constructor(
             load(resetList = false)
         }
     }
+
 
     private fun nowTime(): String = DateFormatter.getCurrentTimeString()
 }

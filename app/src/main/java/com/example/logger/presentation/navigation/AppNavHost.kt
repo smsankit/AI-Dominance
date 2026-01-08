@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -54,18 +55,19 @@ fun AppNavHost() {
             route = Destinations.DASHBOARD,
             arguments = listOf(
                 navArgument(Destinations.ARG_REFRESH) {
-                    type = NavType.BoolType
-                    defaultValue = false
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
                 }
             )
         ) { backStackEntry ->
-            val shouldRefresh = backStackEntry.arguments?.getBoolean(Destinations.ARG_REFRESH) ?: false
+            val refreshToken = backStackEntry.arguments?.getString(Destinations.ARG_REFRESH)
             RootScaffold(navController = navController) { padding ->
                 Box(Modifier.padding(padding)) {
                     DashboardScreen(
-                        shouldRefresh = shouldRefresh,
+                        refreshToken = refreshToken,
                         onNavigateSubmit = {
-                            navController.navigate(Destinations.SUBMIT_STANDUP) {
+                            navController.navigate(Destinations.submitStandup()) {
                                 popUpTo(Destinations.DASHBOARD) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
@@ -86,18 +88,38 @@ fun AppNavHost() {
                                 restoreState = true
                             }
                         },
-                        onNavigateExport = { navController.navigate(Destinations.EXPORT) }
+                        onNavigateExport = { navController.navigate(Destinations.EXPORT) },
+                        onNavigateRoster = { navController.navigate(Destinations.ROSTER) }
                     )
                 }
             }
         }
-        composable(Destinations.HOME) {
+        composable(
+            route = Destinations.HOME,
+            arguments = listOf(
+                navArgument(Destinations.ARG_REFRESH) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val refreshToken = backStackEntry.arguments?.getString(Destinations.ARG_REFRESH)
             RootScaffold(navController = navController) { padding ->
                 Box(Modifier.padding(padding)) {
                     val vm: HomeViewModel = hiltViewModel()
                     HomeRoute(
                         viewModel = vm,
-                        onNavigateExport = { navController.navigate(Destinations.EXPORT) }
+                        refreshToken = refreshToken,
+                        onSubmit = {
+                            navController.navigate(Destinations.submitStandup()) {
+                                popUpTo(Destinations.HOME) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        onNavigateExport = { navController.navigate(Destinations.EXPORT) },
+                        onViewRoster = { navController.navigate(Destinations.ROSTER) }
                     )
                 }
             }
@@ -208,12 +230,15 @@ fun AppNavHost() {
             val homeVm: HomeViewModel = hiltViewModel(dashboardEntry)
             val state = homeVm.uiState.collectAsState()
 
-            // Use pendingCount (accurate from totalElements) to show only actual missing members
-            // No need to load all pages - we already have the accurate count
+            // Load ALL standups to accurately identify which specific members haven't submitted
+            // Using fetchAllStandups=true to get complete list based on totalElements
+            LaunchedEffect(Unit) {
+                homeVm.load(resetList = true, fetchAllStandups = true)
+            }
+
+            // Use actual pending members list from state which is calculated based on teamMemberId
             MissingScreen(
-                roster = state.value.roster,
-                pendingCount = state.value.pendingCount,
-                isLoadingComplete = true,
+                pendingMembers = state.value.pending,
                 onNavigateBack = { navController.popBackStack() },
                 onSubmitStandup = { memberName ->
                     navController.navigate(Destinations.submitStandup(memberName)) {

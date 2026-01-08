@@ -16,21 +16,23 @@ import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun DashboardScreen(
-    shouldRefresh: Boolean = false,
+    refreshToken: String? = null,
     onNavigateSubmit: () -> Unit = {},
     onNavigateHistory: () -> Unit = {},
     onNavigateSettings: () -> Unit = {},
     onNavigateMissing: () -> Unit = {},
     onNavigateExport: () -> Unit = {},
+    onNavigateRoster: () -> Unit = {},
 ) {
     // Body-only Home content, RootScaffold provides FAB and bottom bar
     val vm: HomeViewModel = hiltViewModel()
     HomeRoute(
         viewModel = vm,
-        shouldRefresh = shouldRefresh,
+        refreshToken = refreshToken,
         onViewMissing = onNavigateMissing,
         onSubmit = onNavigateSubmit,
         onExport = onNavigateExport,
-        onNavigateExport = onNavigateExport
+        onNavigateExport = onNavigateExport,
+        onViewRoster = onNavigateRoster
     )
 }

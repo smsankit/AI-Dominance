@@ -5,7 +5,8 @@ object Destinations {
     const val DASHBOARD_BASE = "dashboard"
     const val ARG_REFRESH = "refresh"
     const val DASHBOARD = "$DASHBOARD_BASE?$ARG_REFRESH={$ARG_REFRESH}"
-    const val HOME = "home"
+    const val HOME_BASE = "home"
+    const val HOME = "$HOME_BASE?$ARG_REFRESH={$ARG_REFRESH}"
     const val SUBMIT_STANDUP_BASE = "submit_standup"
     const val ARG_MEMBER_NAME = "memberName"
     const val SUBMIT_STANDUP = "$SUBMIT_STANDUP_BASE?$ARG_MEMBER_NAME={$ARG_MEMBER_NAME}"
@@ -19,7 +20,16 @@ object Destinations {
     const val EXPORT = "export"
 
     fun submitConfirm(ts: String) = "$SUBMIT_CONFIRM_BASE/$ts"
-    fun dashboard(refresh: Boolean = false) = "$DASHBOARD_BASE?$ARG_REFRESH=$refresh"
+    fun dashboard(refresh: Boolean = false) = if (refresh) {
+        "$DASHBOARD_BASE?$ARG_REFRESH=${System.currentTimeMillis()}"
+    } else {
+        DASHBOARD_BASE
+    }
+    fun home(refresh: Boolean = false) = if (refresh) {
+        "$HOME_BASE?$ARG_REFRESH=${System.currentTimeMillis()}"
+    } else {
+        HOME_BASE
+    }
     fun submitStandup(memberName: String? = null) = if (memberName != null) {
         "$SUBMIT_STANDUP_BASE?$ARG_MEMBER_NAME=${java.net.URLEncoder.encode(memberName, "UTF-8")}"
     } else {

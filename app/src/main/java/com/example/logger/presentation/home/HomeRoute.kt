@@ -1,6 +1,7 @@
 package com.example.logger.presentation.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.PersonOff
 import androidx.compose.material.icons.outlined.Settings
@@ -40,9 +42,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.logger.domain.model.Standup
 import com.example.logger.ui.theme.LoggerTheme
 
@@ -60,21 +67,24 @@ import com.example.logger.ui.theme.LoggerTheme
 @Composable
 fun HomeRoute(
     viewModel: HomeViewModel,
-    shouldRefresh: Boolean = false,
+    refreshToken: String? = null,
     onViewMissing: () -> Unit = {},
     onSubmit: () -> Unit = {},
     onExport: () -> Unit = {},
     onNavigateExport: () -> Unit = {},
+    onViewRoster: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    // Refresh data when explicitly requested (from submit success screen)
+    // Refresh data when refresh token changes (triggered by navigation with timestamp)
+    // Using refreshToken instead of boolean ensures this triggers every time we want to refresh
     // On first load, ViewModel's init block handles the data loading via fetchTeamMembers() -> load()
-    LaunchedEffect(shouldRefresh) {
-        if (shouldRefresh) {
+    LaunchedEffect(refreshToken) {
+        if (refreshToken != null) {
             viewModel.load()
         }
     }
+
 
     Scaffold(
         topBar = {
@@ -101,7 +111,8 @@ fun HomeRoute(
                 onViewMissing = onViewMissing,
                 onSubmit = onSubmit,
                 onExport = onNavigateExport,
-                onLoadMore = { viewModel.loadMore() }
+                onLoadMore = { viewModel.loadMore() },
+                onViewRoster = onViewRoster
             )
         }
     }
@@ -115,6 +126,7 @@ private fun HomeScreen(
     onSubmit: () -> Unit,
     onExport: () -> Unit,
     onLoadMore: () -> Unit,
+    onViewRoster: () -> Unit,
 ) {
     when {
         state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -172,15 +184,15 @@ private fun HomeScreen(
                         }
                     }
 
-                    item {
-                        RowHeader(onExport = onExport)
-                    }
-
                     if (state.submissions.isEmpty()) {
                         item {
-                            EmptyState()
+                            EmptyState(onSubmit = onSubmit, onViewRoster = onViewRoster)
                         }
                     } else {
+                        item {
+                            RowHeader(onExport = onExport)
+                        }
+
                         items(state.submissions) { s ->
                             SubmissionCard(s)
                         }
@@ -431,17 +443,53 @@ private fun LabeledSection(label: String, text: String, highlight: Boolean = fal
 }
 
 @Composable
-private fun EmptyState() {
+private fun EmptyState(onSubmit: () -> Unit, onViewRoster: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 32.dp),
+            .padding(vertical = 64.dp, horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("📭", style = MaterialTheme.typography.headlineLarge)
-        Spacer(Modifier.height(8.dp))
-        Text("No standups yet", style = MaterialTheme.typography.titleMedium, color = Color(0xFF666666))
-        Text("Be the first to submit today", style = MaterialTheme.typography.bodySmall, color = Color(0xFF999999))
+        Text(
+            text = "📭",
+            style = MaterialTheme.typography.displayLarge,
+            fontSize = 80.sp
+
+
+
+        )
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text = "No Standups Yet",
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "Start by submitting your first daily standup or add team members.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFF666666),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        Spacer(Modifier.height(32.dp))
+        Column(
+            modifier = Modifier.fillMaxWidth(0.85f),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Button(
+                onClick = onSubmit,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(Icons.Outlined.Add, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Submit First Standup")
+            }
+
+        }
     }
 }
 
@@ -457,6 +505,7 @@ private fun PreviewDashboardLoading() {
             onSubmit = {},
             onExport = {},
             onLoadMore = {},
+            onViewRoster = {},
         )
     }
 }
@@ -472,6 +521,7 @@ private fun PreviewDashboardError() {
             onSubmit = {},
             onExport = {},
             onLoadMore = {},
+            onViewRoster = {},
         )
     }
 }
@@ -502,6 +552,7 @@ private fun PreviewDashboardData() {
             onSubmit = {},
             onExport = {},
             onLoadMore = {},
+            onViewRoster = {},
         )
     }
 }

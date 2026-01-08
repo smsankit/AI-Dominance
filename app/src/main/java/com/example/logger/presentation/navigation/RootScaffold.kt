@@ -72,15 +72,12 @@ fun RootScaffold(
                                 when (tab) {
                                     RootTab.Home -> {
                                         val current = navController.currentBackStackEntry?.destination?.route
-                                        if (!current?.startsWith(Destinations.DASHBOARD_BASE)!!) {
-                                            val popped = navController.popBackStack(Destinations.DASHBOARD_BASE, inclusive = false)
-                                            if (!popped) {
-                                                navController.navigate(Destinations.dashboard(refresh = false)) {
-                                                    popUpTo(Destinations.DASHBOARD_BASE) { saveState = true }
-                                                    launchSingleTop = true
-                                                    restoreState = true
-                                                }
-                                            }
+                                        // Always navigate to dashboard with refresh=true when clicking the tab
+                                        // This ensures data is fresh after standup submission or coming from History
+                                        navController.navigate(Destinations.dashboard(refresh = true)) {
+                                            popUpTo(Destinations.DASHBOARD_BASE) { inclusive = true }
+                                            launchSingleTop = true
+                                            restoreState = false // Don't restore state to ensure refresh happens
                                         }
                                     }
                                     RootTab.Submit -> {
