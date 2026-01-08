@@ -1,6 +1,7 @@
 package com.example.logger.data.repository
 
 import com.example.logger.core.network.NetworkResult
+import com.example.logger.core.network.safeNetworkCall
 import com.example.logger.data.mapper.toDomain
 import com.example.logger.data.remote.api.LoggerApi
 import com.example.logger.data.remote.dto.SubmitStandupEntryRequestDto
@@ -20,8 +21,11 @@ class StandupRepositoryImpl @Inject constructor(
 ) : StandupRepository {
     override fun getTodayStandup(): Flow<NetworkResult<StandupDay>> = flow {
         try {
-            val dto = api.getStandup()
-            emit(NetworkResult.Success(dto.toDomain()))
+            val result = safeNetworkCall { api.getStandup() }
+            when (result) {
+                is NetworkResult.Success -> emit(NetworkResult.Success(result.data.toDomain()))
+                is NetworkResult.Error -> emit(NetworkResult.Error(message = result.message, throwable = result.throwable, code = result.code))
+            }
         } catch (e: Exception) {
             emit(NetworkResult.Error(message = e.message, throwable = e))
         }
@@ -29,17 +33,21 @@ class StandupRepositoryImpl @Inject constructor(
 
     override suspend fun submitStandupEntry(request: StandupEntryRequestData): NetworkResult<StandupEntryData> {
         return try {
-            val response = api.submitStandupEntry(
-                SubmitStandupEntryRequestDto(
-                    standupDate = request.standupDate,
-                    yesterdayWork = request.yesterdayWork,
-                    todayPlan = request.todayPlan,
-                    blockers = request.blockers,
-                    teamMemberId = request.teamMemberId,
-                    teamId = request.teamId
+            when (val result = safeNetworkCall {
+                api.submitStandupEntry(
+                    SubmitStandupEntryRequestDto(
+                        standupDate = request.standupDate,
+                        yesterdayWork = request.yesterdayWork,
+                        todayPlan = request.todayPlan,
+                        blockers = request.blockers,
+                        teamMemberId = request.teamMemberId,
+                        teamId = request.teamId
+                    )
                 )
-            )
-            NetworkResult.Success(response.toDomain())
+            }) {
+                is NetworkResult.Success -> NetworkResult.Success(result.data.toDomain())
+                is NetworkResult.Error -> NetworkResult.Error(message = result.message, throwable = result.throwable, code = result.code)
+            }
         } catch (e: Exception) {
             NetworkResult.Error(message = e.message, throwable = e)
         }
@@ -53,14 +61,18 @@ class StandupRepositoryImpl @Inject constructor(
         standupDate: String?
     ): NetworkResult<PaginatedStandupEntriesData> {
         return try {
-            val response = api.getStandupEntries(
-                teamId = teamId,
-                page = page,
-                size = size,
-                teamMemberId = teamMemberId,
-                standupDate = standupDate
-            )
-            NetworkResult.Success(response.toDomain())
+            when (val result = safeNetworkCall {
+                api.getStandupEntries(
+                    teamId = teamId,
+                    page = page,
+                    size = size,
+                    teamMemberId = teamMemberId,
+                    standupDate = standupDate
+                )
+            }) {
+                is NetworkResult.Success -> NetworkResult.Success(result.data.toDomain())
+                is NetworkResult.Error -> NetworkResult.Error(message = result.message, throwable = result.throwable, code = result.code)
+            }
         } catch (e: Exception) {
             NetworkResult.Error(message = e.message, throwable = e)
         }

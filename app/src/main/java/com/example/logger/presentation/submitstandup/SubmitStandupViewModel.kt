@@ -109,7 +109,6 @@ class SubmitStandupViewModel @Inject constructor(
             val result = submitUseCase(request)
             when (result) {
                 is NetworkResult.Success -> {
-                    Log.e("SubmitStandupViewModel", "Submission successful: ${result.data}")
                     val ts = DateFormatter.getCurrentTimeString()
                     _uiState.value = _uiState.value.copy(
                         isSubmitting = false,
@@ -127,9 +126,9 @@ class SubmitStandupViewModel @Inject constructor(
                     onSuccess(ts)
                 }
                 is NetworkResult.Error -> {
-                    Log.e("SubmitStandupViewModel", "Submission failed: ${result.message}")
-                    _uiState.value = _uiState.value.copy(isSubmitting = false, error = result.message ?: "Submission failed")
-                    _events.send(SubmitStandupUiEvent.ApiError(_uiState.value.error ?: "Submission failed"))
+                    val errorMessage =  result.message ?: "Submission failed"
+                    _uiState.value = _uiState.value.copy(isSubmitting = false, error = errorMessage)
+                    _events.send(SubmitStandupUiEvent.ApiError(errorMessage))
                 }
             }
         }

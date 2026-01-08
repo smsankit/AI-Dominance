@@ -69,13 +69,10 @@ fun SubmitStandupScreen(
             }
 
             // Validation banner
-            if (state.error != null) {
+            state.error?.let { errorMessage ->
                 ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
                     Text(
-                        text = when (state.error) {
-                            "required_fields_missing" -> stringResource(R.string.required_fields_missing)
-                            else -> stringResource(R.string.unknown_error)
-                        },
+                        text = errorMessage,
                         modifier = Modifier.padding(12.dp),
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )

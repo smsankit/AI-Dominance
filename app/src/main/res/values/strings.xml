@@ -17,6 +17,7 @@
     <string name="blockers_label_optional">Any blockers? (optional)</string>
     <string name="required_fields_missing">Please fill all required fields.</string>
     <string name="unknown_error">Something went wrong. Please try again.</string>
+    <string name="standup_already_submitted">Standup is already submitted for the User</string>
     <string name="cancel">Cancel</string>
     <string name="back">Back</string>
     <string name="submitted_title">Submitted!</string>

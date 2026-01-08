@@ -2,7 +2,6 @@ package com.example.logger.presentation.export
 
 import android.content.Context
 import android.net.Uri
-import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.network.NetworkResult
@@ -13,9 +12,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
-import java.util.Calendar
 import javax.inject.Inject
 
 data class ExportUiState(
@@ -71,6 +67,7 @@ class ExportViewModel @Inject constructor(
                 teamId = 1, // Using hardcoded teamId for now
                 page = currentState.currentPage,
                 size = currentState.pageSize,
+                teamMemberId = null,
                 standupDate = date
             )
 
