@@ -205,9 +205,9 @@ Logger_workspace/
 - Annotate Activities with `@AndroidEntryPoint`
 - Use `@HiltViewModel` for ViewModels
 - Create modules in `core/di/` with appropriate annotations:
-    - `@Module` + `@InstallIn(SingletonComponent::class)`
-    - Use `@Provides` for third-party dependencies
-    - Use `@Binds` for interface implementations
+  - `@Module` + `@InstallIn(SingletonComponent::class)`
+  - Use `@Provides` for third-party dependencies
+  - Use `@Binds` for interface implementations
 - Inject dependencies via constructor injection when possible
 
 ### Repository Pattern
