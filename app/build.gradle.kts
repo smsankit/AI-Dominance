@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.hilt.android)
+    id("jacoco")
 }
 
 android {
@@ -95,13 +96,13 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    // Coroutine testing
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    // Coroutine testing (match coroutines version 1.9.0)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     // Turbine for testing
     testImplementation("app.cash.turbine:turbine:1.0.0")
-    // Mockito for mocking
+    // Mockito for mocking (use correct version for Kotlin 2.x)
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
     testImplementation("org.mockito:mockito-core:5.2.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.0")
     // JUnit for testing
     testImplementation("junit:junit:4.13.2")
     // Robolectric for Android main looper mocking in unit tests
@@ -110,4 +111,56 @@ dependencies {
 
 kapt {
     correctErrorTypes = true
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+// JaCoCo test coverage report task
+// This will generate HTML and XML reports after running tests
+// You can view the HTML report in app/build/reports/jacoco/test/html/index.html
+
+// Only configure if not already present
+// language=kotlin
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+    val fileFilter = listOf(
+        // Exclude generated, test, di, and Android classes
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "**/di/**",
+        "**/Hilt*.*",
+        "**/Dagger*.*",
+        "**/*_Factory*.*",
+        "**/*_Hilt*.*",
+        "**/*_MembersInjector*.*",
+        "**/databinding/**",
+        "**/android/databinding/**",
+        "**/androidx/databinding/**",
+        "**/BR.*"
+    )
+    val javaClasses = fileTree(
+        mapOf(
+            "dir" to "$buildDir/intermediates/javac/debug/classes",
+            "excludes" to fileFilter
+        )
+    )
+    val kotlinClasses = fileTree(
+        mapOf(
+            "dir" to "$buildDir/tmp/kotlin-classes/debug",
+            "excludes" to fileFilter
+        )
+    )
+    classDirectories.setFrom(files(javaClasses, kotlinClasses))
+    sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+    executionData.setFrom(files("$buildDir/jacoco/testDebugUnitTest.exec"))
 }
