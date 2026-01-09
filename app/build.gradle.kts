@@ -130,6 +130,12 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         xml.required.set(true)
         html.required.set(true)
     }
+    val includes = listOf(
+        "**/presentation/**/*ViewModel.class",
+        "**/presentation/**/*UiState.class",
+        "**/presentation/**/*ScreenKt.class",
+        "**/domain/usecase/*UseCase.class"
+    )
     val fileFilter = listOf(
         // Exclude generated, test, di, and Android classes
         "**/R.class",
@@ -137,7 +143,6 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "**/BuildConfig.*",
         "**/Manifest*.*",
         "**/*Test*.*",
-        "**/di/**",
         "**/Hilt*.*",
         "**/Dagger*.*",
         "**/*_Factory*.*",
@@ -146,17 +151,28 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "**/databinding/**",
         "**/android/databinding/**",
         "**/androidx/databinding/**",
-        "**/BR.*"
+        "**/BR.*",
+        "**/ComposableSingletons*.*",
+        "**/*Composable*.*",
+
+        // Coroutines
+        "**/*FlowCollector*.*",
+        "**/*SuspendLambda*.*",
+
+        // Anonymous inner classes: $1, $2, etc.
+        "**/*\\$[0-9]*.*"
     )
     val javaClasses = fileTree(
         mapOf(
             "dir" to "$buildDir/intermediates/javac/debug/classes",
+            "includes" to includes,
             "excludes" to fileFilter
         )
     )
     val kotlinClasses = fileTree(
         mapOf(
             "dir" to "$buildDir/tmp/kotlin-classes/debug",
+            "includes" to includes,
             "excludes" to fileFilter
         )
     )
