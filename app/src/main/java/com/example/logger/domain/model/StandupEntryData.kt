@@ -9,5 +9,6 @@ data class StandupEntryData(
     val teamMemberId: Long,
     val teamId: Long,
     val createdAt: String?,
-    val updatedAt: String?
+    val updatedAt: String?,
+    val teamMember: TeamMember
 )

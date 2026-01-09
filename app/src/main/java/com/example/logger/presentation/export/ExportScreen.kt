@@ -72,7 +72,7 @@ fun ExportScreen(
     val standups = remember(uiState.standupEntries) {
         uiState.standupEntries.map { entry ->
             ExportStandupUiModel(
-                name = "Team Member #${entry.teamMemberId}",
+                name = entry.teamMember?.name ?: "Team Member #${entry.teamMemberId}",
                 time = entry.createdAt ?: "--:--",
                 yesterday = entry.yesterdayWork,
                 today = entry.todayPlan,

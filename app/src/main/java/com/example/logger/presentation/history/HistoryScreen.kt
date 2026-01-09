@@ -80,7 +80,7 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.submit_standup_title),
+                        text = stringResource(R.string.history),
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 },
@@ -303,7 +303,7 @@ fun HistoryScreen(onNavigateBack: () -> Unit) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
-                                                text = "Team Member #${s.teamMemberId}",
+                                                text = s.teamMember?.name ?: "Team Member #${s.teamMemberId}",
                                                 style = MaterialTheme.typography.titleMedium
                                             )
                                             if (hasBlocker) {

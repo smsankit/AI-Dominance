@@ -7,11 +7,13 @@ import com.example.logger.data.remote.dto.StandupDto
 import com.example.logger.data.remote.dto.StandupEntryDto
 import com.example.logger.data.remote.dto.StandupEntryResponseDto
 import com.example.logger.data.remote.dto.StandupResponseDto
+import com.example.logger.data.remote.dto.TeamMemberDto
 import com.example.logger.domain.model.PaginatedStandupEntriesData
 import com.example.logger.domain.model.PaginationMetaData
 import com.example.logger.domain.model.Standup
 import com.example.logger.domain.model.StandupDay
 import com.example.logger.domain.model.StandupEntryData
+import com.example.logger.domain.model.TeamMember
 
 fun StandupDto.toDomain() = Standup(
     id = id,
@@ -38,7 +40,9 @@ fun StandupEntryResponseDto.toDomain() = StandupEntryData(
     teamMemberId = teamMemberId,
     teamId = teamId,
     createdAt = DateFormatter.parseToTimeString(createdAt),
-    updatedAt = DateFormatter.parseToTimeString(updatedAt)
+    updatedAt = DateFormatter.parseToTimeString(updatedAt),
+    teamMember = teamMember.toDomain()
+
 )
 
 fun StandupEntryDto.toDomain() = StandupEntryData(
@@ -50,7 +54,8 @@ fun StandupEntryDto.toDomain() = StandupEntryData(
     teamMemberId = teamMemberId,
     teamId = teamId,
     createdAt = DateFormatter.parseToTimeString(createdAt),
-    updatedAt = DateFormatter.parseToTimeString(updatedAt)
+    updatedAt = DateFormatter.parseToTimeString(updatedAt),
+    teamMember = teamMember.toDomain()
 )
 
 fun PaginationMetaDto.toDomain() = PaginationMetaData(
@@ -59,6 +64,12 @@ fun PaginationMetaDto.toDomain() = PaginationMetaData(
     totalElements = totalElements,
     totalPages = totalPages
 )
+
+fun TeamMemberDto.toDomain() = TeamMember(
+    id = id,
+    name = name,
+    email = email,
+    )
 
 fun PaginatedStandupEntriesDto.toDomain() = PaginatedStandupEntriesData(
     items = data.map { it.toDomain() },

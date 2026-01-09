@@ -92,8 +92,11 @@ class HomeViewModel @Inject constructor(
 
                     // Map StandupEntryData to Standup model for UI
                     // createdAt and updatedAt are already formatted to time strings (HH:mm) in the mapper
+                    // Use teamMember.name from API response if available, fallback to teamMembersMap or ID
                     val mappedSubmissions = updatedEntries.map { entry ->
-                        val memberName = teamMembersMap[entry.teamMemberId] ?: "Team Member #${entry.teamMemberId}"
+                        val memberName = entry.teamMember?.name
+                            ?: teamMembersMap[entry.teamMemberId]
+                            ?: "Team Member #${entry.teamMemberId}"
                         val time = entry.createdAt ?: "--:--"
 
                         Standup(

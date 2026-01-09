@@ -14,7 +14,8 @@ data class StandupEntryDto(
     val teamMemberId: Long,
     val teamId: Long,
     val createdAt: String?,
-    val updatedAt: String?
+    val updatedAt: String?,
+    val teamMember: TeamMemberDto
 )
 
 data class PaginationMetaDto(
