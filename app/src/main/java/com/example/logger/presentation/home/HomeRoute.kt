@@ -55,6 +55,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -119,7 +121,7 @@ fun HomeRoute(
 }
 
 @Composable
-private fun HomeScreen(
+fun HomeScreen(
     state: HomeUiState,
     onRetry: () -> Unit,
     onViewMissing: () -> Unit,
@@ -130,7 +132,7 @@ private fun HomeScreen(
 ) {
     when {
         state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(modifier = Modifier.semantics { contentDescription = "Progress indicator" })
         }
         state.error != null -> Column(
             modifier = Modifier.fillMaxSize(),
