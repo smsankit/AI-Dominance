@@ -23,6 +23,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -130,17 +134,21 @@ jacoco {
 // language=kotlin
 
 tasks.register<JacocoReport>("jacocoTestReport") {
-    dependsOn("testDebugUnitTest")
+    dependsOn("testDebugUnitTest", "createDebugCoverageReport")
+
     reports {
         xml.required.set(true)
         html.required.set(true)
+        html.outputLocation.set(file("$buildDir/reports/jacoco/jacocoTestReport/html"))
     }
+
     val includes = listOf(
         "**/presentation/**/*ViewModel.class",
         "**/presentation/**/*UiState.class",
         "**/presentation/**/*ScreenKt.class",
         "**/domain/usecase/*UseCase.class"
     )
+
     val fileFilter = listOf(
         // Exclude generated, test, di, and Android classes
         "**/R.class",
@@ -167,6 +175,7 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         // Anonymous inner classes: $1, $2, etc.
         "**/*\\$[0-9]*.*"
     )
+
     val javaClasses = fileTree(
         mapOf(
             "dir" to "$buildDir/intermediates/javac/debug/classes",
@@ -181,7 +190,16 @@ tasks.register<JacocoReport>("jacocoTestReport") {
             "excludes" to fileFilter
         )
     )
+
     classDirectories.setFrom(files(javaClasses, kotlinClasses))
     sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
-    executionData.setFrom(files("$buildDir/jacoco/testDebugUnitTest.exec"))
+
+    // Include both unit test and instrumented test execution data
+    executionData.setFrom(fileTree(buildDir) {
+        include(
+            "jacoco/testDebugUnitTest.exec",
+            "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+            "outputs/code_coverage/debugAndroidTest/connected/**/*.ec"
+        )
+    })
 }
