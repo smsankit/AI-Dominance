@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.hilt.android)
     id("jacoco")
+    id("kotlin-kapt")
 }
 
 android {
@@ -107,6 +108,10 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     // Robolectric for Android main looper mocking in unit tests
     testImplementation("org.robolectric:robolectric:4.11.1")
+
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.51.1")
+    kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.51.1")
+
 }
 
 kapt {
