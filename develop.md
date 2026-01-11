@@ -311,8 +311,142 @@ Feature: SubmitStandup
 **Action:** Accepted
 **Reasoning:** Ensures reliable behavior across view models with clean architecture flows.
 
-### Interaction 48
-**Prompt/Context:** Document Windows PowerShell test commands and best practices in develop.md.
-**Suggestion:** Include commands for running targeted tests and global suites, and note using Robolectric, Dispatchers.setMain/resetMain, and advanceUntilIdle in tests.
+
+
+# Edge Case Analysis
+### Interaction 1
+**Prompt/Context:**
+You are an experienced QA, you need to check the application and identify all the edge cases and list down in fe_edge_cases.md.
+**Suggestion:**
+A comprehensive edge case and boundary testing checklist was created and saved in fe_edge_cases.md. This document covers all major features, including authentication, and is intended for use by QA for both manual and automated testing.
+**Action:** Modified
+**Reasoning:** Authentication is not part of the application, so the checklist needs to be updated accordingly.
+
+
+### Interaction 2
+**Prompt/Context:**
+Authentication is not part of the application. Please update the edge case checklist to focus only on the actual features provided (standup entry, history, export, team members, etc.).
+**Suggestion:**
+The edge case and boundary testing checklist was updated and saved in fe_edge_cases.md. It now clearly states that authentication is not part of the application, and all edge cases are focused on the actual features provided. This ensures clarity for QA and all future readers. See fe_edge_cases.md for the full checklist.
 **Action:** Accepted
-**Reasoning:** Provides repeatable guidance for contributors to run and debug tests locally.
+**Reasoning:** Ensures the checklist is accurate and relevant to the application's real feature set, avoiding confusion about authentication requirements.
+
+
+# JaCoCo Report Configuration
+
+## Copilot Usage Summary (Recent Session)
+- Total interactions: 20
+- Most valuable use: Fine-grained JaCoCo filtering to include only presentation Screens/ViewModels/UIState and domain usecases, enabling targeted coverage insights per your requirements.
+- Least valuable use: Attempts to suppress function/lambda rows in the default JaCoCo HTML (not natively supported), requiring external tooling or custom parsing.
+
+## Detailed Log (Recent Session)
+
+### Interaction 1
+**Prompt/Context:** Create a JaCoCo report.
+**Suggestion:** Use `./gradlew jacocoTestReport` and open `build/reports/jacoco/test/html/index.html`.
+**Action:** Accepted
+**Reasoning:** Standard, reproducible JaCoCo task.
+
+### Interaction 2
+**Prompt/Context:** Open JaCoCo report in Chrome.
+**Suggestion:** Provide Windows PowerShell command to open the HTML report in Chrome.
+**Action:** Accepted
+**Reasoning:** Quick access for review.
+
+### Interaction 3
+**Prompt/Context:** Exclude packages from report; include only domain and presentation.
+**Suggestion:** Adjust Gradle JaCoCo filters to include `presentation/**` and `domain/**`; exclude others.
+**Action:** Modified
+**Reasoning:** Implemented includes for `presentation/**` and `domain/**` with targeted excludes; refined over time to avoid missing classes.
+
+### Interaction 4
+**Prompt/Context:** Include only domain usecases.
+**Suggestion:** Restrict includes to `domain/usecase/**` and presentation layer.
+**Action:** Accepted
+**Reasoning:** Matches your coverage scope.
+
+### Interaction 5
+**Prompt/Context:** Include only files in presentation ending with Screen, ViewModel, UIState.
+**Suggestion:** Use include patterns matching `*Screen.kt`, `*ViewModel.kt`, `*UiState.kt`.
+**Action:** Accepted
+**Reasoning:** Targets UI and state classes.
+
+### Interaction 6
+**Prompt/Context:** Generate report again with new filters.
+**Suggestion:** Re-run `jacocoTestReport` after Gradle changes.
+**Action:** Accepted
+**Reasoning:** Produces updated filtered report.
+
+### Interaction 7
+**Prompt/Context:** Report shows only MainActivity and Application; need all classes.
+**Suggestion:** Ensure correct source sets and include patterns; remove over-filtering.
+**Action:** Modified
+**Reasoning:** Adjusted classDirectories/sourceDirectories and relaxed filters to include intended files.
+
+### Interaction 8
+**Prompt/Context:** Do not show functions/lambdas as separate rows; only class coverage.
+**Suggestion:** Explain JaCoCo default granularity and suggest reading class-level aggregates; propose custom post-processing if needed.
+**Action:** Modified
+**Reasoning:** Adopted class-level view in JaCoCo UI; noted limitation and deferred custom processing.
+
+### Interaction 9
+**Prompt/Context:** Generate report without Python; use original JaCoCo.
+**Suggestion:** Stick to Gradle JaCoCo plugin; avoid Python scripts.
+**Action:** Accepted
+**Reasoning:** Simpler, maintainable approach.
+
+### Interaction 10
+**Prompt/Context:** Create report again and open in Chrome.
+**Suggestion:** Re-run task and open HTML index.
+**Action:** Accepted
+**Reasoning:** Iterative verification.
+
+### Interaction 11
+**Prompt/Context:** Exclude IDE-generated report noise and use JaCoCo only.
+**Suggestion:** Use `build/reports/jacoco/test/html/` report as the source of truth.
+**Action:** Accepted
+**Reasoning:** Standardizes on JaCoCo output.
+
+### Interaction 12
+**Prompt/Context:** Log top interactions related to JaCoCo in a documentation file.
+**Suggestion:** Create `jacaco_intrection.md` with summary and detailed logs.
+**Action:** Accepted
+**Reasoning:** Traceability and documentation.
+
+### Interaction 13
+**Prompt/Context:** Update log to reflect recent session interactions specifically.
+**Suggestion:** Mark the section as "Recent Session" and compile interactions from this session.
+**Action:** Accepted
+**Reasoning:** Accuracy and clarity.
+
+### Interaction 14
+**Prompt/Context:** Report only includes a subset; needs more classes.
+**Suggestion:** Verify include/exclude globs, ensure `classDirectories` points to compiled classes and `sourceDirectories` to Kotlin sources.
+**Action:** Accepted
+**Reasoning:** Corrects configuration for coverage resolution.
+
+
+### Interaction 15
+**Prompt/Context:** Want presentation-only report with Screens/ViewModels/UIStates.
+**Suggestion:** Apply precise glob patterns and test they resolve to actual files.
+**Action:** Accepted
+**Reasoning:** Alignment with requested focus.
+
+### Interaction 16
+**Prompt/Context:** Need domain-only usecases in coverage.
+**Suggestion:** Include `domain/usecase/**` and exclude other domain subpackages.
+**Action:** Accepted
+**Reasoning:** Accurate scoping of domain.
+
+### Interaction 17
+**Prompt/Context:** Avoid per-function rows; prefer class-level.
+**Suggestion:** Read by Class view in JaCoCo; consider exporting class-only summary.
+**Action:** Modified
+**Reasoning:** Used class-level aggregates; deferred custom export.
+
+
+### Interaction 18
+**Prompt/Context:** Open latest report in Chrome and verify filters.
+**Suggestion:** Open `index.html` and confirm target classes present.
+**Action:** Accepted
+**Reasoning:** Final manual verification.

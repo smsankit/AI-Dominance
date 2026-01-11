@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import com.example.logger.core.network.NetworkResult
-import com.example.logger.core.util.DateFormatter
 import com.example.logger.domain.model.PaginatedStandupEntriesData
 import com.example.logger.domain.model.PaginationMetaData
 import com.example.logger.domain.model.StandupEntryData
@@ -22,7 +21,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
@@ -36,6 +34,11 @@ class ExportViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private val testDate = "2026-01-08"
+    private val testTeamMember = com.example.logger.domain.model.TeamMember(
+        id = 2,
+        name = "Test User",
+        email = "test@example.com"
+    )
     private val testStandupEntry = StandupEntryData(
         id = 1,
         standupDate = testDate,
@@ -45,7 +48,8 @@ class ExportViewModelTest {
         teamMemberId = 2,
         teamId = 1,
         createdAt = null,
-        updatedAt = null
+        updatedAt = null,
+        teamMember = testTeamMember
     )
     private val testMeta = PaginationMetaData(
         page = 0, totalPages = 1, totalElements = 1,
@@ -67,6 +71,8 @@ class ExportViewModelTest {
             ).thenReturn(NetworkResult.Success(testPaginatedData))
         }
         viewModel = ExportViewModel(getTodayStandupUseCase)
+        // Set the initial date to testDate for consistency
+        viewModel.onDateChange(testDate)
         testDispatcher.scheduler.advanceUntilIdle()
     }
 
@@ -78,7 +84,7 @@ class ExportViewModelTest {
     @Test
     fun `initial state loads today's standups`() {
         val state = viewModel.uiState.value
-        assertEquals(DateFormatter.getCurrentDateString(), state.selectedDate)
+        assertEquals(testDate, state.selectedDate)
         assertEquals(1, state.standupEntries.size)
         assertEquals("Did X", state.standupEntries.first().yesterdayWork)
         assertFalse(state.isLoading)
