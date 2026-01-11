@@ -5,6 +5,7 @@ import com.example.logger.core.util.DateFormatter
 import com.example.logger.domain.model.PaginatedStandupEntriesData
 import com.example.logger.domain.model.PaginationMetaData
 import com.example.logger.domain.model.StandupEntryData
+import com.example.logger.domain.model.TeamMember
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,7 +50,12 @@ class HistoryViewModelTest {
         teamMemberId = 1,
         teamId = 1,
         createdAt = null,
-        updatedAt = null
+        updatedAt = null,
+        teamMember = TeamMember(
+            id = 1,
+            name = "Test User",
+            email = "test@example.com"
+        )
     )
 
     @Before

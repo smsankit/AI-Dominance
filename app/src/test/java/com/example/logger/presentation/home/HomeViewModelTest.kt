@@ -5,6 +5,7 @@ import com.example.logger.core.util.DateFormatter
 import com.example.logger.domain.model.PaginatedStandupEntriesData
 import com.example.logger.domain.model.PaginationMetaData
 import com.example.logger.domain.model.StandupEntryData
+import com.example.logger.domain.model.TeamMember
 import com.example.logger.domain.model.TeamMemberData
 import com.example.logger.domain.usecase.GetTeamMembersUseCase
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
@@ -18,7 +19,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -48,7 +48,12 @@ class HomeViewModelTest {
             teamMemberId = memberId,
             teamId = 1,
             createdAt = createdAt,
-            updatedAt = updatedAt
+            updatedAt = updatedAt,
+            teamMember = TeamMember(
+                id = memberId,
+                name = if (memberId == memberAlice.id) "Alice" else "Bob",
+                email = if (memberId == memberAlice.id) "a@a.com" else "b@b.com"
+            )
         )
 
     @Before

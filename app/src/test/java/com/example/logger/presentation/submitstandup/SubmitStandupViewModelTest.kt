@@ -10,9 +10,6 @@ import com.example.logger.presentation.submitstandup.mapper.SubmitStandupUiMappe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestCoroutineScheduler
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -31,7 +28,7 @@ import org.robolectric.RobolectricTestRunner
 import org.junit.runner.RunWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
+
 class SubmitStandupViewModelTest {
     private lateinit var viewModel: SubmitStandupViewModel
     private lateinit var submitUseCase: SubmitStandupUseCase
@@ -100,7 +97,12 @@ class SubmitStandupViewModelTest {
             teamMemberId = 1L,
             teamId = 1L,
             createdAt = null,
-            updatedAt = null
+            updatedAt = null,
+            teamMember = com.example.logger.domain.model.TeamMember(
+                id = 1L,
+                name = "Alice",
+                email = "alice@example.com"
+            )
         )
         whenever(submitUseCase.invoke(any())).thenReturn(NetworkResult.Success(standupEntryData))
         viewModel = SubmitStandupViewModel(submitUseCase, uiMapper, getTeamMembersUseCase, preferencesManager)
