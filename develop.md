@@ -450,3 +450,105 @@ The edge case and boundary testing checklist was updated and saved in fe_edge_ca
 **Suggestion:** Open `index.html` and confirm target classes present.
 **Action:** Accepted
 **Reasoning:** Final manual verification.
+
+
+
+## Unit testcase for UI settings
+
+### Interaction 19
+**Prompt/Context:** Setup and Write UI testcases for #file:ExportScreen.kt using androidx.compose.ui:ui-test-junit4 and other supporting libraries.
+**Suggestion:** Added dependencies for Compose UI testing, JUnit, and Mockito in `app/build.gradle.kts`. Created `ExportScreenTest.kt` with tests for initial state, date selection, export button click, and error handling using Compose Test APIs.
+**Action:** Accepted
+**Reasoning:** Provides comprehensive UI tests for ExportScreen functionality.
+
+### Interaction 20
+**Prompt/Context:** /fix the issue in #file:ExportScreenTest.kt
+**Suggestion:** Addressed issues in `ExportScreenTest.kt` by ensuring proper setup of ComposeTestRule, using correct semantics for finding UI elements, and adding necessary delays or idling resources to handle asynchronous operations.
+**Action:** Accepted
+**Reasoning:** Ensures reliable and passing UI tests for ExportScreen.
+
+### Interaction 21
+**Prompt/Context:** write testcases for #file:HomeRoute.kt
+**Suggestion:** Created `HomeRouteTest.kt` with tests for initial loading state, team member display, error handling, and refresh functionality using Compose Test APIs and Mockito for mocking ViewModel behavior.
+**Action:** Accepted
+**Reasoning:** Provides thorough UI tests for HomeRoute functionality.
+
+### Interaction 22
+**Prompt/Context:** All test cases are failing, fix the issues in #file:HomeRouteTest.kt
+**Suggestion:** Resolved issues in `HomeRouteTest.kt` by ensuring correct mocking of ViewModel states, using appropriate Compose Test semantics for UI elements, and adding necessary synchronization for asynchronous operations.
+**Action:** Accepted
+**Reasoning:** Ensures reliable and passing UI tests for HomeRoute.
+
+### Interaction 23
+**Prompt/Context:** write testcases for #file:RoasterScreen.kt
+**Suggestion:** Created `RoasterScreenTest.kt` with tests for initial loading state, team member list display, error handling, and refresh functionality using Compose Test APIs and Mockito for mocking ViewModel behavior.
+**Action:** Rejected
+**Reasoning:** Write the testcase using class which is not the part of test library `HiltTestActivity.kt`.
+
+### Interaction 24
+**Prompt/Context:** Take referance of #file:ExportScreenTest.kt and write the testcase for #RosterScreen and use all the actual strings used in #RoasterScreen
+**Suggestion:** Created `RoasterScreenTest.kt` without using `HiltTestActivity.kt` as a reference. Implemented tests for initial loading, team member list display, error handling, and refresh functionality, utilizing actual strings from `RoasterScreen`.
+**Action:** Accepted
+**Reasoning:** Testcases running successfully.
+
+### Interaction 25
+**Prompt/Context:** Take referance of #file:RoasterScreenTest.kt and write the testcase for #SettingScreen.kt and use all the actual strings used in #RoasterScreen
+**Suggestion:** Created `SettingScreenTest.kt` based on `RoasterScreenTest.kt`. Implemented tests for initial state, toggle settings, error handling, and save functionality, using actual strings from `SettingScreen`.
+**Action:** Accepted
+**Reasoning:** Testcases running successfully except one.
+
+### Interaction 26
+**Prompt/Context:** /fix notificationsCard_displaysTwoSwitches getting below error
+java.lang.AssertionError: Failed to assert count of nodes.
+Reason: Expected '2' nodes but could not find any node that satisfies: (ContentDescription = 'Switch' (ignoreCase: false))
+at androidx.compose.ui.test.AssertionsKt.assertCountEquals(Assertions.kt:282)
+at com.example.logger.SettingsScreenTest.notificationsCard_displaysTwoSwitches(SettingsScreenTest.kt:149)
+**Suggestion:** Fixed the `notificationsCard_displaysTwoSwitches` test by ensuring that the Switch components in `SettingsScreen` have the correct content descriptions set. Updated the test to match the actual content description used in the UI.
+**Action:** Accepted
+**Reasoning:** Testcase running successfully.
+
+### Interaction 27
+**Prompt/Context:** Take referance of #file:SettingScreenTest.kt and write the testcase for #SplashScreen.kt and use all the actual strings used in #SplashScreen.kt
+**Suggestion:** Created `SplashScreenTest.kt` based on `SettingScreenTest.kt`. Implemented tests for initial state, button click actions, and UI element visibility, using actual strings from `SplashScreen`.
+**Action:** Accepted
+**Reasoning:** Testcases running successfully.
+
+### Interaction 28
+**Prompt/Context:** Take referance of #file:SplashScreenTest.kt and write the testcase for #SubmitStandupScreen.kt and use all the actual strings used in #SubmitStandupScreen.kt
+**Suggestion:** Created `SubmitStandupScreenTest.kt` and `SubmitStandupScreenTest_v2.kt` based on `SplashScreenTest.kt`. Implemented tests for initial state, form input validation, submission actions, and error handling, using actual strings from `SubmitStandupScreen`.
+**Action:** Modified
+**Reasoning:** Testcases not running and giving error in build.
+
+### Interaction 29
+**Prompt/Context:** getting below issue
+e: file:///C:/D/NAGP/AI%20Dominance/Logger_workspace/app/src/androidTest/java/com/example/logger/SubmitStandupScreenTest.kt:56:7 Redeclaration:
+class SubmitStandupScreenTest : Any
+**Suggestion:** Resolved the redeclaration issue in `SubmitStandupScreenTest.kt` by deleting one of the conflicting classes. Ensured that each test class has a unique name to avoid compilation errors.
+**Action:** Accepted
+**Reasoning:** Testcases running successfully.
+
+### Interaction 30
+**Prompt/Context:** Take referance of #file:SubmitStandupScreenTest.kt and write the testcase for #HistoryScreen.kt and use all the actual strings used in #HistoryScreen.kt
+**Suggestion:** Created `HistoryScreenTest.kt` based on `SubmitStandupScreenTest.kt. Implemented tests for initial state, date filtering, pagination, and error handling, using actual strings from `HistoryScreen`.
+**Action:** Accepted
+**Reasoning:** Testcases written with error.
+
+### Interaction 31
+**Prompt/Context:** getting below error for all testcases in #file:HistoryScreenTest.kt
+java.lang.IllegalStateException: Given component holder class androidx.activity.ComponentActivity does not implement interface dagger.hilt.internal.GeneratedComponent or interface dagger.hilt.internal.GeneratedComponentManager
+at dagger.hilt.EntryPoints.get(EntryPoints.java:62)
+**Suggestion:** Resolved the `IllegalStateException` in `HistoryScreenTest.kt` by ensuring that the test class is properly annotated with `@HiltAndroidTest` and that the Hilt test runner is being used. 
+**Action:** Accepted
+**Reasoning:** Testcases running successfully.
+
+## Interaction 32
+**Prompt/Context:** Take referance of #file:HistoryScreenTest.kt and write the testcase for #SubmitConfirmScreen.kt and use all the actual strings used in #SubmitConfirmScreen.kt
+**Suggestion:** Created `SubmitConfirmScreenTest.kt` based on `HistoryScreenTest.kt`. Implemented tests for initial state, confirmation actions, and UI element visibility, using actual strings from `SubmitConfirmScreen`.
+**Action:** Accepted
+**Reasoning:** Testcases running successfully.
+
+## Interaction 33
+**Prompt/Context:** Write testcases for #file:DashboardScreen.kt
+**Suggestion:** Created `DashboardScreenTest.kt`. Implemented tests for initial loading state, dashboard item display, error handling, and refresh functionality using Compose Test APIs and Mockito for mocking ViewModel behavior.
+**Action:** Accepted    
+**Reasoning:** Provides thorough UI tests for DashboardScreen functionality.
