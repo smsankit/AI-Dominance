@@ -107,12 +107,13 @@
         <div class="nav-item" data-screen="splash"><span class="material-icons-outlined">waving_hand</span> Splash Screen</div>
         <div class="nav-item" data-screen="dashboard"><span class="material-icons-outlined">dashboard</span> Dashboard</div>
         <div class="nav-item" data-screen="empty-dashboard"><span class="material-icons-outlined">inbox</span> Empty Dashboard</div>
-        <div class="nav-item" data-screen="missing"><span class="material-icons-outlined">person_off</span> Missing Today</div>
+        <div class="nav-item" data-screen="missing"><span class="material-icons-outlined">person_off</span> Missing Standup</div>
         <div class="nav-item" data-screen="submit"><span class="material-icons-outlined">edit_note</span> Submit Standup</div>
         <div class="nav-item" data-screen="history"><span class="material-icons-outlined">event_note</span> History</div>
         <div class="nav-item" data-screen="export"><span class="material-icons-outlined">download</span> Export</div>
         <div class="nav-item" data-screen="roster"><span class="material-icons-outlined">group</span> Team Roster</div>
         <div class="nav-item" data-screen="settings"><span class="material-icons-outlined">settings</span> Settings</div>
+        <div class="nav-item" data-screen="sentiment"><span class="material-icons-outlined">psychology</span> Sentiment Analysis</div>
       </div>
     </div>
 
@@ -155,9 +156,52 @@
       ]
     };
 
+    // Sentiment data (mocked) - values: 1 (positive), 0 (neutral), -1 (negative)
+    const sentimentData = {
+      [todayKey]: [
+        { name:"Alex Johnson", sentiment: 1, date: todayKey },
+        { name:"Priya Verma", sentiment: 0, date: todayKey },
+        { name:"Miguel Santos", sentiment: 1, date: todayKey },
+        { name:"You", sentiment: -1, date: todayKey }
+      ],
+      [dateKey(addDays(new Date(), -1))]: [
+        { name:"Alex Johnson", sentiment: 1, date: dateKey(addDays(new Date(), -1)) },
+        { name:"Priya Verma", sentiment: 1, date: dateKey(addDays(new Date(), -1)) },
+        { name:"You", sentiment: 0, date: dateKey(addDays(new Date(), -1)) }
+      ],
+      [dateKey(addDays(new Date(), -2))]: [
+        { name:"Alex Johnson", sentiment: 0, date: dateKey(addDays(new Date(), -2)) },
+        { name:"Priya Verma", sentiment: -1, date: dateKey(addDays(new Date(), -2)) },
+        { name:"Miguel Santos", sentiment: 1, date: dateKey(addDays(new Date(), -2)) },
+        { name:"You", sentiment: 1, date: dateKey(addDays(new Date(), -2)) }
+      ],
+      [dateKey(addDays(new Date(), -3))]: [
+        { name:"Alex Johnson", sentiment: 1, date: dateKey(addDays(new Date(), -3)) },
+        { name:"Miguel Santos", sentiment: 0, date: dateKey(addDays(new Date(), -3)) },
+        { name:"You", sentiment: 1, date: dateKey(addDays(new Date(), -3)) }
+      ],
+      [dateKey(addDays(new Date(), -4))]: [
+        { name:"Priya Verma", sentiment: 1, date: dateKey(addDays(new Date(), -4)) },
+        { name:"Miguel Santos", sentiment: 1, date: dateKey(addDays(new Date(), -4)) },
+        { name:"You", sentiment: 0, date: dateKey(addDays(new Date(), -4)) }
+      ],
+      [dateKey(addDays(new Date(), -5))]: [
+        { name:"Alex Johnson", sentiment: -1, date: dateKey(addDays(new Date(), -5)) },
+        { name:"Priya Verma", sentiment: 0, date: dateKey(addDays(new Date(), -5)) },
+        { name:"You", sentiment: 1, date: dateKey(addDays(new Date(), -5)) }
+      ],
+      [dateKey(addDays(new Date(), -6))]: [
+        { name:"Alex Johnson", sentiment: 1, date: dateKey(addDays(new Date(), -6)) },
+        { name:"Priya Verma", sentiment: 1, date: dateKey(addDays(new Date(), -6)) },
+        { name:"Miguel Santos", sentiment: -1, date: dateKey(addDays(new Date(), -6)) },
+        { name:"You", sentiment: 1, date: dateKey(addDays(new Date(), -6)) }
+      ]
+    };
+
     // State
     let selectedScreen = "splash";
     let selectedDate = new Date();
+    let sentimentPeriod = 7; // days for sentiment analysis
 
     // Helpers
     function dateKey(d){ return d.toISOString().slice(0,10); }
@@ -248,6 +292,36 @@
         h("div",{style:"margin-top:16px;font-size:13px;opacity:0.8"},`Last updated ${nowTime()}`)
       ]);
       wrap.append(statCard);
+
+      // Insights banner from sentiment screen
+      const dashboardSentimentCounts = {positive: 0, neutral: 0, negative: 0};
+      for(let i = 0; i < sentimentPeriod; i++){
+        const d = addDays(new Date(), -i);
+        const key = dateKey(d);
+        const dayData = sentimentData[key] || [];
+        dayData.forEach(entry => {
+          if(entry.sentiment === 1) { dashboardSentimentCounts.positive++; }
+          else if(entry.sentiment === 0) { dashboardSentimentCounts.neutral++; }
+          else if(entry.sentiment === -1) { dashboardSentimentCounts.negative++; }
+        });
+      }
+      const dashboardTotal = dashboardSentimentCounts.positive + dashboardSentimentCounts.neutral + dashboardSentimentCounts.negative;
+      if(dashboardTotal > 0) {
+        const avgSentiment = ((dashboardSentimentCounts.positive - dashboardSentimentCounts.negative) / dashboardTotal).toFixed(2);
+        const mood = avgSentiment > 0.3 ? "Very Positive 😊" : avgSentiment > 0 ? "Positive 🙂" : avgSentiment > -0.3 ? "Neutral 😐" : "Needs Attention 😟";
+        const insightsCard = h("div",{class:"card",style:"background:#e8f5e9;border-left:4px solid #4caf50;display:flex;align-items:center;justify-content:space-between"});
+        insightsCard.append(
+          h("div",{style:"flex:1"},[
+            h("div",{style:"font-weight:600;font-size:14px;margin-bottom:8px;color:#2e7d32"},"Team Mood: " + mood),
+            h("div",{style:"font-size:13px;color:#1b5e20"},[
+              `Based on ${dashboardTotal} submissions over ${sentimentPeriod} days. `,
+              avgSentiment > 0 ? "Team morale is good!" : avgSentiment < -0.3 ? "Consider team check-in." : "Team sentiment is balanced."
+            ])
+          ]),
+          h("button",{class:"btn icon",style:"background:transparent;color:#2e7d32;border:none;margin-left:12px;cursor:pointer",title:"View Sentiment Analysis",onclick:()=>{console.log('Arrow clicked'); route('sentiment');}},[mi('arrow_forward')])
+        );
+        wrap.append(insightsCard);
+      }
 
       if(pending.length > 0){
         const pendingBar = h("div",{style:"background:#fff3e0;border-left:4px solid #e65100;padding:16px;border-radius:12px;margin-bottom:16px"},[
@@ -691,6 +765,149 @@
       return wrap;
     }
 
+    function screenSentiment(){
+      console.log("screenSentiment called");
+      try {
+        const wrap = h("div");
+
+        wrap.append(
+          h("div",{class:"page-header"},[
+            h("div",{class:"page-title", text:"Sentiment Analysis"}),
+            h("div",{class:"page-subtitle", text:"Team mood insights over time"})
+          ])
+        );
+
+      // Period selector
+      const periodCard = h("div",{class:"card"});
+      const periodSelect = h("select",{class:"sel", onchange:(e)=>{sentimentPeriod=parseInt(e.target.value); render();}});
+      [7,14,30].forEach(days=>{
+        const option = h("option",{value:String(days), text:`Last ${days} days`});
+        if(sentimentPeriod === days) option.selected = true;
+        periodSelect.appendChild(option);
+      });
+      periodCard.append(
+        h("div",{class:"label", text:"Analysis Period"}),
+        periodSelect
+      );
+      wrap.append(periodCard);
+
+      // Collect sentiment data for the period
+      const sentimentCounts = {positive: 0, neutral: 0, negative: 0};
+      const dailyData = [];
+
+      for(let i = 0; i < sentimentPeriod; i++){
+        const d = addDays(new Date(), -i);
+        const key = dateKey(d);
+        const dayData = sentimentData[key] || [];
+
+        let dayPositive = 0, dayNeutral = 0, dayNegative = 0;
+
+        dayData.forEach(entry => {
+          if(entry.sentiment === 1) { sentimentCounts.positive++; dayPositive++; }
+          else if(entry.sentiment === 0) { sentimentCounts.neutral++; dayNeutral++; }
+          else if(entry.sentiment === -1) { sentimentCounts.negative++; dayNegative++; }
+        });
+
+        if(dayData.length > 0){
+          const dateStr = fmtDate(d);
+          const dateParts = dateStr.split(",");
+          const formattedDate = dateParts.length > 1 ? dateParts[1].trim() : dateStr;
+          dailyData.unshift({
+            date: formattedDate,
+            positive: dayPositive,
+            neutral: dayNeutral,
+            negative: dayNegative
+          });
+        }
+      }
+
+      const total = sentimentCounts.positive + sentimentCounts.neutral + sentimentCounts.negative;
+
+      if(total === 0){
+        wrap.append(h("div",{style:"text-align:center;padding:48px 24px"},[
+          h("div",{style:"font-size:64px;margin-bottom:16px"},"📊"),
+          h("div",{style:"font-size:18px;font-weight:500;margin-bottom:8px"},"No Data Available"),
+          h("div",{style:"font-size:14px;color:#666"},"No sentiment data for this period")
+        ]));
+        return wrap;
+      }
+
+      // Overall sentiment card with pie chart
+      const overallCard = h("div",{class:"card"});
+      overallCard.append(
+        h("div",{style:"font-weight:500;font-size:16px;margin-bottom:16px"},"Overall Sentiment Distribution")
+      );
+
+      // Pie chart using canvas for better rendering
+      const canvasWrapper = h("div",{style:"text-align:center;margin:24px auto"});
+      const canvas = document.createElement("canvas");
+      canvas.width = 200;
+      canvas.height = 200;
+      canvas.style.cursor = "pointer";
+
+      const ctx = canvas.getContext("2d");
+      const centerX = 100;
+      const centerY = 100;
+      const radius = 90;
+
+      const posPercent = Math.round((sentimentCounts.positive / total) * 100);
+      const neutPercent = Math.round((sentimentCounts.neutral / total) * 100);
+      const negPercent = 100 - posPercent - neutPercent;
+
+      const segments = [
+        {color:"#4caf50", percent:posPercent, label:"Positive", count:sentimentCounts.positive},
+        {color:"#ff9800", percent:neutPercent, label:"Neutral", count:sentimentCounts.neutral},
+        {color:"#f44336", percent:negPercent, label:"Negative", count:sentimentCounts.negative}
+      ];
+
+      let currentAngle = -Math.PI / 2; // Start from top
+      segments.forEach(seg=>{
+        if(seg.percent > 0){
+          const sliceAngle = (seg.percent / 100) * 2 * Math.PI;
+
+          // Draw slice
+          ctx.beginPath();
+          ctx.moveTo(centerX, centerY);
+          ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+          ctx.closePath();
+          ctx.fillStyle = seg.color;
+          ctx.fill();
+
+          // Draw border
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          currentAngle += sliceAngle;
+        }
+      });
+
+      canvas.onclick = ()=>alert(`Total Submissions: ${total}\\n\\nPositive: ${sentimentCounts.positive} (${posPercent}%)\\nNeutral: ${sentimentCounts.neutral} (${neutPercent}%)\\nNegative: ${sentimentCounts.negative} (${negPercent}%)`);
+
+      canvasWrapper.appendChild(canvas);
+      overallCard.append(canvasWrapper);
+
+      // Legend
+      const legend = h("div",{style:"display:flex;justify-content:space-around;flex-wrap:wrap;gap:12px;margin-top:16px"});
+      segments.forEach(seg=>{
+        legend.append(h("div",{style:"display:flex;align-items:center;gap:8px;cursor:pointer",onclick:()=>alert(`${seg.label}: ${seg.count} submissions (${seg.percent}%)`)},[
+          h("div",{style:`width:16px;height:16px;border-radius:50%;background:${seg.color}`}),
+          h("div",{style:"font-size:13px"},[
+            h("div",{style:"font-weight:500"},seg.label),
+            h("div",{style:"color:#666;font-size:11px"},`${seg.count} (${seg.percent}%)`)
+          ])
+        ]));
+      });
+      overallCard.append(legend);
+      wrap.append(overallCard);
+
+      return wrap;
+      } catch(err) {
+        console.error("Error in screenSentiment:", err);
+        return h("div",{style:"color:red;padding:20px"}, "Error loading sentiment data: " + err.message);
+      }
+    }
+
     // UI helpers
     function chip(text){ return h("div",{class:"chip"}, text); }
     function fieldSelect(label, required=false, options=[], val=""){
@@ -760,6 +977,7 @@
 
     // Router
     function route(screen, params){
+      console.log("route called with screen:", screen);
       selectedScreen = screen;
       render(params);
     }
@@ -772,25 +990,32 @@
       document.querySelectorAll(".bottom .nav").forEach(n=>n.classList.toggle("active", n.dataset.screen===selectedScreen));
 
       let node, header;
+      console.log("render switch with selectedScreen:", selectedScreen);
+      // Hide bottom bar on splash
+      const bottomBar = document.querySelector('.bottom');
       switch(selectedScreen){
         case "splash":
           header = h("div",{class:"title", text:"Welcome"});
           node = screenSplash();
+          if(bottomBar) bottomBar.style.display = 'none';
           break;
         case "empty-dashboard":
           header = h("div",{class:"title", text:"Dashboard"});
           node = screenEmptyDashboard();
+          if(bottomBar) bottomBar.style.display = '';
           break;
         case "dashboard": 
           header = h("div",{class:"title", text:"Dashboard"});
           node = screenDashboard(); 
+          if(bottomBar) bottomBar.style.display = '';
           break;
         case "missing": 
           header = h("div",{style:"display:flex;align-items:center;width:100%"},[
             h("button",{class:"back-btn", onclick:()=>route('dashboard')},[mi('arrow_back')]),
-            h("div",{class:"title", text:"Missing Today"})
+            h("div",{class:"title", text:"Missing Standup"})
           ]);
           node = screenMissing(); 
+          if(bottomBar) bottomBar.style.display = 'none';
           break;
         case "submit": 
           header = h("div",{style:"display:flex;align-items:center;width:100%"},[
@@ -798,14 +1023,17 @@
             h("div",{class:"title", text:"Submit Standup"})
           ]);
           node = screenSubmit(); 
+          if(bottomBar) bottomBar.style.display = '';
           break;
         case "confirm": 
           header = h("div",{class:"title", text:"Submitted"});
           node = screenConfirm(params); 
+          if(bottomBar) bottomBar.style.display = '';
           break;
         case "history": 
           header = h("div",{class:"title", text:"History"});
           node = screenHistory(); 
+          if(bottomBar) bottomBar.style.display = '';
           break;
         case "export": 
           header = h("div",{style:"display:flex;align-items:center;width:100%"},[
@@ -813,6 +1041,7 @@
             h("div",{class:"title", text:"Export"})
           ]);
           node = screenExport(); 
+          if(bottomBar) bottomBar.style.display = '';
           break;
         case "roster": 
           header = h("div",{style:"display:flex;align-items:center;width:100%"},[
@@ -820,10 +1049,20 @@
             h("div",{class:"title", text:"Team Roster"})
           ]);
           node = screenRoster(); 
+          if(bottomBar) bottomBar.style.display = 'none';
           break;
         case "settings": 
           header = h("div",{class:"title", text:"Settings"});
           node = screenSettings(); 
+          if(bottomBar) bottomBar.style.display = '';
+          break;
+        case "sentiment":
+          header = h("div",{style:"display:flex;align-items:center;width:100%"},[
+            h("button",{class:"back-btn", onclick:()=>route('dashboard')},[mi('arrow_back')]),
+            h("div",{class:"title", text:"Sentiment Analysis"})
+          ]);
+          node = screenSentiment();
+          if(bottomBar) bottomBar.style.display = 'none';
           break;
         default: 
           selectedScreen="dashboard"; 
@@ -868,3 +1107,4 @@
   </script>
 </body>
 </html>
+
