@@ -29,8 +29,11 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryScreen(onNavigateBack: () -> Unit) {
-    val vm: HistoryViewModel = hiltViewModel()
+fun HistoryScreen(
+    onNavigateBack: () -> Unit,
+    viewModel: HistoryViewModel = hiltViewModel()
+) {
+    val vm: HistoryViewModel = viewModel
     val state by vm.uiState.collectAsState()
     val context = LocalContext.current
 
