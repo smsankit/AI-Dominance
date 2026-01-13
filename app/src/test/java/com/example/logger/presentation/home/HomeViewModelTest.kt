@@ -7,7 +7,9 @@ import com.example.logger.domain.model.PaginationMetaData
 import com.example.logger.domain.model.StandupEntryData
 import com.example.logger.domain.model.TeamMember
 import com.example.logger.domain.model.TeamMemberData
+import com.example.logger.domain.model.TeamSentimentItem
 import com.example.logger.domain.usecase.GetTeamMembersUseCase
+import com.example.logger.domain.usecase.GetTeamSentimentsUseCase
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,6 +33,7 @@ import org.mockito.kotlin.whenever
 class HomeViewModelTest {
     private lateinit var getTodayStandupUseCase: GetTodayStandupUseCase
     private lateinit var getTeamMembersUseCase: GetTeamMembersUseCase
+    private lateinit var getTeamSentimentsUseCase: GetTeamSentimentsUseCase
     private lateinit var viewModel: HomeViewModel
     private val testDispatcher = StandardTestDispatcher()
 
@@ -61,8 +64,11 @@ class HomeViewModelTest {
         Dispatchers.setMain(testDispatcher)
         getTodayStandupUseCase = mock()
         getTeamMembersUseCase = mock()
+        getTeamSentimentsUseCase = mock()
         // Team members flow success by default
         whenever(getTeamMembersUseCase.invoke(eq(1L), eq(0), eq(100), eq(true))).thenReturn(flowOf(NetworkResult.Success(teamMembers)))
+        // Team sentiments flow success by default (empty list is fine for testing)
+        whenever(getTeamSentimentsUseCase.invoke(eq(1L), anyOrNull(), anyOrNull())).thenReturn(flowOf(NetworkResult.Success(emptyList())))
     }
 
     @After
@@ -81,7 +87,7 @@ class HomeViewModelTest {
                 getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
             ).thenReturn(NetworkResult.Success(page))
         }
-        viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -116,7 +122,7 @@ class HomeViewModelTest {
                 getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
             ).thenReturn(NetworkResult.Success(page0))
         }
-        viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
         testDispatcher.scheduler.advanceUntilIdle()
         // canLoadMore true after first load
         assertTrue(viewModel.uiState.value.canLoadMore)
@@ -145,7 +151,7 @@ class HomeViewModelTest {
                 getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
             ).thenReturn(NetworkResult.Error(message = "fail"))
         }
-        viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
         testDispatcher.scheduler.advanceUntilIdle()
         val state = viewModel.uiState.value
         assertEquals("fail", state.error)
