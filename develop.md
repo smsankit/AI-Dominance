@@ -552,3 +552,62 @@ at dagger.hilt.EntryPoints.get(EntryPoints.java:62)
 **Suggestion:** Created `DashboardScreenTest.kt`. Implemented tests for initial loading state, dashboard item display, error handling, and refresh functionality using Compose Test APIs and Mockito for mocking ViewModel behavior.
 **Action:** Accepted    
 **Reasoning:** Provides thorough UI tests for DashboardScreen functionality.
+
+
+
+
+### Sentiment Analysis Screen
+
+## Interaction 34
+**Prompt/Context:** add team mood card in HomeScreen() available in #file:HomeRoute.kt as per the #file:wireframe.html and integrate the api /teams/{teamId}/sentiments from #file:api.yaml .
+In response we have array of object which contain field value = 1/0/ -1 which means
+1 = Positive, 0 = Neutral, -1 = Negative
+calculate the number of 1, 0, -1 to calculate the sentiments.
+Card colour should be Red in case of Negative sentiment, Green in case of Positive and Yellow in case of Neutral.
+**Suggestion:** Added TeamMoodCard composable to HomeScreen in HomeRoute.kt. Integrated /teams/{teamId}/sentiments API in TeamApiService and TeamRepositoryImpl. Created Sentiment domain model and GetTeamSentimentsUseCase to fetch and process sentiment data. Calculated counts of positive, neutral, and negative sentiments to determine card color (Red, Green, Yellow) based on majority sentiment.
+**Action:** Accepted
+**Reasoning:** Implements sentiment feature end-to-end per clean architecture and wireframe design.
+
+## Interaction 35
+**Prompt/Context:** file:TeamMoodCard.kt is not as per the #file:wireframe.html
+**Suggestion:** Updated TeamMoodCard composable to match wireframe design. Adjusted layout, colors, and text styles to align with provided specifications in wireframe.html.
+**Action:** Accepted
+**Reasoning:** Ensures UI consistency with design requirements.
+
+## Interaction 36
+**Prompt/Context:** border of TeamMoodCard should be as is In #file:wireframe.html. For reference you can use HomeScreen() "Standups submitted today" card.
+**Suggestion:** Added border to TeamMoodCard composable using Modifier.border with appropriate color and thickness to match the "Standups submitted today" card in HomeScreen as per wireframe.html.
+**Action:** Accepted
+**Reasoning:** Enhances visual consistency across cards in the UI.
+
+## Interaction 37
+**Prompt/Context:** Craete a Sentiment Analysis Screen as per the #file:wireframe.html. Pass data from #file:HomeViewModel.kt when user click on TeamMoodCard and navigate to the Sentiment Analysis screen.
+**Suggestion:** Created SentimentAnalysisScreen composable as per wireframe.html. Updated HomeViewModel to handle navigation on TeamMoodCard click, passing sentiment data to SentimentAnalysisScreen. Implemented navigation using Jetpack Navigation component.
+**Action:** Accepted
+**Reasoning:** Completes sentiment analysis feature with navigation and UI per design but some UI enhancement required.
+
+## Interaction 38
+**Prompt/Context:** in #file:SentimentAnalysisScreen.kt
+Toolbar should be same as we are using on #file:MissingScreen.kt.
+content should be in Card with elevation.
+Bottom bar should not be on the screen like #file:MissingScreen.kt
+Chart/Graph should be same as #file:wireframe.html not DonutChart.
+**Suggestion:** Updated SentimentAnalysisScreen composable to include a TopAppBar matching MissingScreen toolbar style. Wrapped content in a Card with elevation for visual depth. Removed bottom bar to align with wireframe design. Replaced DonutChart with a BarChart implementation to match the wireframe.html specifications.
+**Action:** Accepted
+**Reasoning:** Aligns SentimentAnalysisScreen with wireframe design and improves UI consistency but implemented Bar Chart.
+
+### Interaction 39
+**Prompt/Context:** Please implement PieChart in place of Bars
+**Suggestion:** Replaced BarChart implementation in SentimentAnalysisScreen with a PieChart composable. Configured PieChart to display sentiment distribution (positive, neutral, negative) as per wireframe.html design.
+**Action:** Accepted
+**Reasoning:** Matches wireframe design requirements for sentiment visualization.
+
+## Interaction 40
+**Prompt/Context:** sentimentSummary logic should be based on large value.
+positive > negative && neutral then sentiment would be positive
+negative > positive && neutral then sentiment would be positive
+neutral > positive && negative then sentiment would be neutral
+Implement the above logic in #file:TeamMoodCard.kt
+**Suggestion:** Updated sentimentSummary logic in TeamMoodCard.kt to determine overall sentiment based on the highest count among positive, negative, and neutral sentiments. Implemented conditional checks to set sentiment summary accordingly.
+**Action:** Accepted
+**Reasoning:** Ensures accurate sentiment representation based on majority sentiment counts.
