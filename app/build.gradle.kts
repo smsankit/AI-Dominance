@@ -165,6 +165,7 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "**/android/databinding/**",
         "**/androidx/databinding/**",
         "**/BR.*",
+        "**/RosterScreenKt.class",
         "**/ComposableSingletons*.*",
         "**/*Composable*.*",
 
