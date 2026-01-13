@@ -19,6 +19,14 @@ object Destinations {
     const val MISSING = "missing"
     const val EXPORT = "export"
 
+    // Sentiment analysis
+    const val SENTIMENT_BASE = "sentiment"
+    const val ARG_POS = "pos"
+    const val ARG_NEU = "neu"
+    const val ARG_NEG = "neg"
+    const val ARG_TOTAL = "total"
+    const val SENTIMENT = "$SENTIMENT_BASE?$ARG_POS={$ARG_POS}&$ARG_NEU={$ARG_NEU}&$ARG_NEG={$ARG_NEG}&$ARG_TOTAL={$ARG_TOTAL}"
+
     fun submitConfirm(ts: String) = "$SUBMIT_CONFIRM_BASE/$ts"
     fun dashboard(refresh: Boolean = false) = if (refresh) {
         "$DASHBOARD_BASE?$ARG_REFRESH=${System.currentTimeMillis()}"
@@ -35,4 +43,7 @@ object Destinations {
     } else {
         SUBMIT_STANDUP_BASE
     }
+
+    fun sentimentRoute(pos: Int, neu: Int, neg: Int, total: Int): String =
+        "$SENTIMENT_BASE?$ARG_POS=$pos&$ARG_NEU=$neu&$ARG_NEG=$neg&$ARG_TOTAL=$total"
 }

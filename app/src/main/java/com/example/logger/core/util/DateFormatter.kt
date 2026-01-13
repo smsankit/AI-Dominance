@@ -1,6 +1,7 @@
 package com.example.logger.core.util
 
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -136,5 +137,14 @@ object DateFormatter {
     } catch (e: Exception) {
         null
     }
-}
 
+    /**
+     * Get date string for N days ago in API format (yyyy-MM-dd) in IST
+     */
+    fun getDateDaysAgoString(daysAgo: Int): String {
+        val cal = Calendar.getInstance(istTimeZone)
+        cal.time = getCurrentDate()
+        cal.add(Calendar.DAY_OF_YEAR, -daysAgo)
+        return getApiDateFormat().format(cal.time)
+    }
+}

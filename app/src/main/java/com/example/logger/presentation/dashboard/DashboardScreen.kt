@@ -24,6 +24,7 @@ fun DashboardScreen(
     onNavigateMissing: () -> Unit = {},
     onNavigateExport: () -> Unit = {},
     onNavigateRoster: () -> Unit = {},
+    onNavigateSentiment: (pos: Int, neu: Int, neg: Int, total: Int) -> Unit = { _, _, _, _ -> },
 ) {
     // Body-only Home content, RootScaffold provides FAB and bottom bar
     val vm: HomeViewModel = viewModel
@@ -34,6 +35,15 @@ fun DashboardScreen(
         onSubmit = onNavigateSubmit,
         onExport = onNavigateExport,
         onNavigateExport = onNavigateExport,
-        onViewRoster = onNavigateRoster
+        onViewRoster = onNavigateRoster,
+        onNavigateToSentimentAnalysis = {
+            val summary = vm.uiState.value.sentimentSummary
+            onNavigateSentiment(
+                summary?.positive ?: 0,
+                summary?.neutral ?: 0,
+                summary?.negative ?: 0,
+                summary?.total ?: 0
+            )
+        }
     )
 }

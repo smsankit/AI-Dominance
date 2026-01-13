@@ -25,6 +25,7 @@ import com.example.logger.presentation.history.HistoryScreen
 import com.example.logger.presentation.settings.SettingsScreen
 import com.example.logger.presentation.roster.RosterScreen
 import com.example.logger.presentation.missing.MissingScreen
+import com.example.logger.presentation.sentiment.SentimentAnalysisScreen
 
 @Composable
 fun AppNavHost() {
@@ -89,7 +90,10 @@ fun AppNavHost() {
                             }
                         },
                         onNavigateExport = { navController.navigate(Destinations.EXPORT) },
-                        onNavigateRoster = { navController.navigate(Destinations.ROSTER) }
+                        onNavigateRoster = { navController.navigate(Destinations.ROSTER) },
+                        onNavigateSentiment = { pos, neu, neg, total ->
+                            navController.navigate(Destinations.sentimentRoute(pos, neu, neg, total))
+                        }
                     )
                 }
             }
@@ -119,7 +123,17 @@ fun AppNavHost() {
                             }
                         },
                         onNavigateExport = { navController.navigate(Destinations.EXPORT) },
-                        onViewRoster = { navController.navigate(Destinations.ROSTER) }
+                        onViewRoster = { navController.navigate(Destinations.ROSTER) },
+                        onNavigateToSentimentAnalysis = {
+                            val summary = vm.uiState.value.sentimentSummary
+                            val route = Destinations.sentimentRoute(
+                                pos = summary?.positive ?: 0,
+                                neu = summary?.neutral ?: 0,
+                                neg = summary?.negative ?: 0,
+                                total = summary?.total ?: 0
+                            )
+                            navController.navigate(route)
+                        }
                     )
                 }
             }
@@ -252,6 +266,29 @@ fun AppNavHost() {
         composable(Destinations.EXPORT) {
             // Export should not show bottom bar or FAB. Render without RootScaffold.
             com.example.logger.presentation.export.ExportScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        // Sentiment analysis screen
+        composable(
+            route = Destinations.SENTIMENT,
+            arguments = listOf(
+                navArgument(Destinations.ARG_POS) { type = NavType.IntType },
+                navArgument(Destinations.ARG_NEU) { type = NavType.IntType },
+                navArgument(Destinations.ARG_NEG) { type = NavType.IntType },
+                navArgument(Destinations.ARG_TOTAL) { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val pos = backStackEntry.arguments?.getInt(Destinations.ARG_POS) ?: 0
+            val neu = backStackEntry.arguments?.getInt(Destinations.ARG_NEU) ?: 0
+            val neg = backStackEntry.arguments?.getInt(Destinations.ARG_NEG) ?: 0
+            val total = backStackEntry.arguments?.getInt(Destinations.ARG_TOTAL) ?: 0
+            // Render without RootScaffold to hide chrome (bottom bar), like Missing screen
+            SentimentAnalysisScreen(
+                pos = pos,
+                neu = neu,
+                neg = neg,
+                total = total,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

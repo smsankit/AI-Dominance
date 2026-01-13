@@ -1,11 +1,14 @@
 package com.example.logger.presentation.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.network.NetworkResult
 import com.example.logger.core.util.DateFormatter
+import com.example.logger.data.mapper.toSummary
 import com.example.logger.domain.model.Standup
 import com.example.logger.domain.usecase.GetTeamMembersUseCase
+import com.example.logger.domain.usecase.GetTeamSentimentsUseCase
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getTodayStandup: GetTodayStandupUseCase,
-    private val getTeamMembers: GetTeamMembersUseCase
+    private val getTeamMembers: GetTeamMembersUseCase,
+    private val getTeamSentiments: GetTeamSentimentsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
@@ -29,6 +33,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         fetchTeamMembers()
+        loadTeamSentiments()
     }
 
     private fun fetchTeamMembers() {
@@ -159,6 +164,42 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private fun loadTeamSentiments() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSentimentLoading = true, sentimentError = null) }
+
+            // Compute 30-day range in IST: from = today - 30 days, to = today
+            val toDate = DateFormatter.getCurrentDateString()
+            val fromDate = DateFormatter.getDateDaysAgoString(30)
+
+            getTeamSentiments(
+                teamId = 1, // Using hardcoded teamId for now
+                from = fromDate,
+                to = toDate
+            ).collect { result ->
+                when (result) {
+                    is NetworkResult.Success -> {
+                        val summary = result.data.toSummary()
+                        _uiState.update {
+                            it.copy(
+                                sentimentSummary = summary,
+                                isSentimentLoading = false,
+                                sentimentError = null
+                            )
+                        }
+                    }
+                    is NetworkResult.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isSentimentLoading = false,
+                                sentimentError = result.message
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private fun nowTime(): String = DateFormatter.getCurrentTimeString()
 }

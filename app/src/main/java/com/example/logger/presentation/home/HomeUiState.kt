@@ -1,5 +1,6 @@
 package com.example.logger.presentation.home
 
+import com.example.logger.domain.model.SentimentSummary
 import com.example.logger.domain.model.Standup
 import com.example.logger.domain.model.StandupEntryData
 
@@ -18,5 +19,8 @@ data class HomeUiState(
     val pageSize: Int = 10, // Page size for pagination (20 items per page)
     val totalEntries: Int = 0,
     val totalPages: Int = 0,
-    val canLoadMore: Boolean = false
+    val canLoadMore: Boolean = false,
+    val sentimentSummary: SentimentSummary? = null,
+    val isSentimentLoading: Boolean = false,
+    val sentimentError: String? = null
 )

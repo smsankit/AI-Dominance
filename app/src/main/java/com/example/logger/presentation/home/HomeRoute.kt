@@ -1,11 +1,9 @@
 package com.example.logger.presentation.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -16,17 +14,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.PersonOff
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -35,24 +30,18 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
@@ -63,6 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.logger.domain.model.Standup
+import com.example.logger.presentation.home.components.TeamMoodCard
 import com.example.logger.ui.theme.LoggerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,6 +65,7 @@ fun HomeRoute(
     onExport: () -> Unit = {},
     onNavigateExport: () -> Unit = {},
     onViewRoster: () -> Unit = {},
+    onNavigateToSentimentAnalysis: (() -> Unit)? = null,
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -114,7 +105,8 @@ fun HomeRoute(
                 onSubmit = onSubmit,
                 onExport = onNavigateExport,
                 onLoadMore = { viewModel.loadMore() },
-                onViewRoster = onViewRoster
+                onViewRoster = onViewRoster,
+                onNavigateToSentimentAnalysis = onNavigateToSentimentAnalysis
             )
         }
     }
@@ -129,6 +121,7 @@ fun HomeScreen(
     onExport: () -> Unit,
     onLoadMore: () -> Unit,
     onViewRoster: () -> Unit,
+    onNavigateToSentimentAnalysis: (() -> Unit)? = null,
 ) {
     when {
         state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -177,6 +170,15 @@ fun HomeScreen(
                             submitted = state.totalEntries, // Use totalEntries from API, not submissions.size
                             total = state.roster.size,
                             lastUpdated = state.lastUpdated
+                        )
+                    }
+
+                    item {
+                        TeamMoodCard(
+                            sentimentSummary = state.sentimentSummary,
+                            isLoading = state.isSentimentLoading,
+                            error = state.sentimentError,
+                            onNavigateToSentimentAnalysis = onNavigateToSentimentAnalysis
                         )
                     }
 
