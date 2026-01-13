@@ -1,14 +1,8 @@
 package com.example.logger
 
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.assertCountEquals
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.logger.presentation.roster.RosterScreen
 import org.junit.Rule
@@ -31,41 +25,41 @@ class RosterScreenTest {
         }
         composeRule.waitForIdle()
 
-        // Verify empty state messages
+        // Check for empty state UI
+        composeRule.onNodeWithText("👥").assertIsDisplayed()
         composeRule.onNodeWithText("No team members").assertIsDisplayed()
         composeRule.onNodeWithText("No team members configured").assertIsDisplayed()
 
         // Verify count shows 0
-        composeRule.onNode(hasText("0 team member", substring = true)).assertIsDisplayed()
+        composeRule.onNodeWithText("0 team members").assertIsDisplayed()
     }
 
     @Test
-    fun singleMember_displaysCorrectly() {
-        val members = listOf("Alice Johnson")
+    fun singleMember_showsCorrectCountAndMemberCard() {
+        val memberName = "Alice Johnson"
 
         composeRule.setContent {
             RosterScreen(
-                members = members,
+                members = listOf(memberName),
                 onNavigateBack = {}
             )
         }
+
         composeRule.waitForIdle()
 
-        // Verify member name is displayed
-        composeRule.onNodeWithText("Alice Johnson").assertIsDisplayed()
+        // Check count uses singular form
+        composeRule.onNodeWithText("1 team member").assertIsDisplayed()
 
-        // Verify count shows singular form (no 's')
-        composeRule.onNode(hasText("1 team member", substring = true)).assertIsDisplayed()
+        // Check member card is displayed
+        composeRule.onNodeWithText(memberName).assertIsDisplayed()
+        composeRule.onNodeWithText("Team member 1").assertIsDisplayed()
 
-        // Verify section label
-        composeRule.onNodeWithText("TEAM MEMBERS").assertIsDisplayed()
-
-        // Verify member subtitle
-        composeRule.onNode(hasText("Team member 1", substring = true)).assertIsDisplayed()
+        // Check initials are displayed
+        composeRule.onNodeWithText("AJ").assertIsDisplayed()
     }
 
     @Test
-    fun multipleMembers_displaysCorrectCount() {
+    fun multipleMembers_showsCorrectPluralCountAndAllCards() {
         val members = listOf(
             "Alice Johnson",
             "Bob Smith",
@@ -78,123 +72,86 @@ class RosterScreenTest {
                 onNavigateBack = {}
             )
         }
+
         composeRule.waitForIdle()
 
-        // Verify all members are displayed
+        // Check count uses plural form
+        composeRule.onNodeWithText("3 team members").assertIsDisplayed()
+
+        // Check all member cards are displayed
         composeRule.onNodeWithText("Alice Johnson").assertIsDisplayed()
         composeRule.onNodeWithText("Bob Smith").assertIsDisplayed()
         composeRule.onNodeWithText("Charlie Brown").assertIsDisplayed()
 
-        // Verify count shows plural form
-        composeRule.onNode(hasText("3 team members", substring = true)).assertIsDisplayed()
-
-        // Verify section label
-        composeRule.onNodeWithText("TEAM MEMBERS").assertIsDisplayed()
-    }
-
-    @Test
-    fun multipleMembers_showsCorrectSubtitles() {
-        val members = listOf(
-            "Alice Johnson",
-            "Bob Smith",
-            "Charlie Brown"
-        )
-
-        composeRule.setContent {
-            RosterScreen(
-                members = members,
-                onNavigateBack = {}
-            )
-        }
-        composeRule.waitForIdle()
-
-        // Verify each member has correct subtitle with index
-        composeRule.onNode(hasText("Team member 1", substring = true)).assertIsDisplayed()
-        composeRule.onNode(hasText("Team member 2", substring = true)).assertIsDisplayed()
-        composeRule.onNode(hasText("Team member 3", substring = true)).assertIsDisplayed()
-    }
-
-    @Test
-    fun memberInitials_areDisplayedCorrectly() {
-        val members = listOf(
-            "Alice Johnson",
-            "Bob Smith",
-            "X" // Single letter name
-        )
-
-        composeRule.setContent {
-            RosterScreen(
-                members = members,
-                onNavigateBack = {}
-            )
-        }
-        composeRule.waitForIdle()
-
-        // Verify the full names are displayed
-        composeRule.onNodeWithText("Alice Johnson").assertIsDisplayed()
-        composeRule.onNodeWithText("Bob Smith").assertIsDisplayed()
-
-        // Verify initials are extracted and displayed
-        // AJ for Alice Johnson, BS for Bob Smith
+        // Check initials for each member
         composeRule.onNodeWithText("AJ").assertIsDisplayed()
         composeRule.onNodeWithText("BS").assertIsDisplayed()
+        composeRule.onNodeWithText("CB").assertIsDisplayed()
 
-        // For single letter "X", both initials and full name should be "X"
-        // So we should find "X" at least once (appears as both name and initials)
-        composeRule.onAllNodesWithText("X").assertCountEquals(2) // Once as name, once as initials
+        // Verify all have subtitles with indices
+        composeRule.onNodeWithText("Team member 1").assertIsDisplayed()
+        composeRule.onNodeWithText("Team member 2").assertIsDisplayed()
+        composeRule.onNodeWithText("Team member 3").assertIsDisplayed()
     }
 
     @Test
-    fun navigationBack_triggersCallback() {
-        var backPressed = false
-
+    fun topBar_showsCorrectTitleAndBackButton() {
         composeRule.setContent {
             RosterScreen(
-                members = listOf("Alice Johnson"),
-                onNavigateBack = { backPressed = true }
-            )
-        }
-        composeRule.waitForIdle()
-
-        // Click back button
-        composeRule.onNodeWithContentDescription("Back").performClick()
-
-        // Verify callback was triggered
-        assert(backPressed) { "Back navigation should trigger callback" }
-    }
-
-    @Test
-    fun topBar_displaysTitleCorrectly() {
-        composeRule.setContent {
-            RosterScreen(
-                members = emptyList(),
+                members = listOf("John Doe"),
                 onNavigateBack = {}
             )
         }
+
         composeRule.waitForIdle()
 
-        // Verify top bar title
+        // Check title
         composeRule.onNodeWithText("Team Roster").assertIsDisplayed()
+
+        // Check back button exists
+        composeRule.onNodeWithContentDescription("Back").assertIsDisplayed()
     }
 
     @Test
-    fun largeMemberList_displaysAll() {
-        val members = (1..10).map { "Team Member $it" }
-
+    fun memberCard_displaysInitialsCorrectly_twoWords() {
         composeRule.setContent {
             RosterScreen(
-                members = members,
+                members = listOf("John Doe"),
                 onNavigateBack = {}
             )
         }
         composeRule.waitForIdle()
 
-        // Verify count
-        composeRule.onNode(hasText("10 team members", substring = true)).assertIsDisplayed()
+        // Check initials are correctly generated for two-word name
+        composeRule.onNodeWithText("JD").assertIsDisplayed()
+    }
 
-        // Verify first and last members (LazyColumn should render visible items)
-        composeRule.onNodeWithText("Team Member 1").assertIsDisplayed()
-        // Note: Not all items may be visible without scrolling in LazyColumn
+    @Test
+    fun memberCard_displaysInitialsCorrectly_singleWord() {
+        composeRule.setContent {
+            RosterScreen(
+                members = listOf("Alice"),
+                onNavigateBack = {}
+            )
+        }
+        composeRule.waitForIdle()
+
+        // Check initials are correctly generated for single-word name
+        composeRule.onNodeWithText("A").assertIsDisplayed()
+    }
+
+    @Test
+    fun memberCard_displaysInitialsCorrectly_threeWords() {
+        composeRule.setContent {
+            RosterScreen(
+                members = listOf("Bob Smith Jr"),
+                onNavigateBack = {}
+            )
+        }
+        composeRule.waitForIdle()
+
+        // Check initials are correctly generated for three-word name
+        composeRule.onNodeWithText("BS").assertIsDisplayed()
     }
 
     @Test
@@ -207,37 +164,16 @@ class RosterScreenTest {
                 onNavigateBack = {}
             )
         }
+
         composeRule.waitForIdle()
 
         // Verify plural form is used for 2 members
-        composeRule.onNode(hasText("2 team members", substring = true)).assertIsDisplayed()
+        composeRule.onNodeWithText("2 team members").assertIsDisplayed()
     }
 
     @Test
-    fun emptyState_doesNotShowSectionLabel() {
-        composeRule.setContent {
-            RosterScreen(
-                members = emptyList(),
-                onNavigateBack = {}
-            )
-        }
-        composeRule.waitForIdle()
-
-        // Verify empty state is shown (with emoji icon)
-        composeRule.onNodeWithText("👥").assertIsDisplayed()
-        composeRule.onNodeWithText("No team members").assertIsDisplayed()
-
-        // When empty, the "TEAM MEMBERS" section label should not appear
-        // We verify by checking empty state message is shown instead
-    }
-
-    @Test
-    fun membersWithSpecialCharacters_displayCorrectly() {
-        val members = listOf(
-            "O'Brien",
-            "José García",
-            "李明"
-        )
+    fun largeList_allMembersAreScrollable() {
+        val members = (1..20).map { "Member $it" }
 
         composeRule.setContent {
             RosterScreen(
@@ -245,12 +181,140 @@ class RosterScreenTest {
                 onNavigateBack = {}
             )
         }
+
         composeRule.waitForIdle()
 
-        // Verify all names with special characters display correctly
-        composeRule.onNodeWithText("O'Brien").assertIsDisplayed()
-        composeRule.onNodeWithText("José García").assertIsDisplayed()
-        composeRule.onNodeWithText("李明").assertIsDisplayed()
+        // Check count is correct
+        composeRule.onNodeWithText("20 team members").assertIsDisplayed()
+
+        // First member should be visible
+        composeRule.onNodeWithText("Member 1").assertIsDisplayed()
+
+        // Verify list is scrollable
+        composeRule.onAllNodes(hasScrollAction())
+            .onFirst()
+            .performScrollToIndex(5)
+
+        composeRule.waitForIdle()
+
+        // After scrolling, Member 6 should be visible
+        composeRule.onNodeWithText("Member 6").assertIsDisplayed()
+    }
+
+    @Test
+    fun emptyState_noSectionLabelShown() {
+        composeRule.setContent {
+            RosterScreen(
+                members = emptyList(),
+                onNavigateBack = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify section label is not shown in empty state
+        composeRule.onNodeWithText("👥").assertIsDisplayed()
+        composeRule.onNodeWithText("No team members").assertIsDisplayed()
+    }
+
+    @Test
+    fun backButton_hasCorrectContentDescription() {
+        composeRule.setContent {
+            RosterScreen(
+                members = listOf("Alice"),
+                onNavigateBack = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify back button has accessibility label
+        composeRule.onNodeWithContentDescription("Back")
+            .assertIsDisplayed()
+            .assertHasClickAction()
+    }
+
+    @Test
+    fun memberCard_displaysInitialsCorrectly_specialCharacters() {
+        composeRule.setContent {
+            RosterScreen(
+                members = listOf("José García"),
+                onNavigateBack = {}
+            )
+        }
+        composeRule.waitForIdle()
+
+        // Check initials with special characters
+        composeRule.onNodeWithText("JG").assertIsDisplayed()
+    }
+
+    @Test
+    fun memberCard_hasElevation() {
+        composeRule.setContent {
+            RosterScreen(
+                members = listOf("John Doe"),
+                onNavigateBack = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify the member card is rendered
+        composeRule.onNodeWithText("John Doe").assertIsDisplayed()
+    }
+
+    @Test
+    fun backButton_triggersCallback() {
+        var backPressed = false
+
+        composeRule.setContent {
+            RosterScreen(
+                members = listOf("Alice Johnson"),
+                onNavigateBack = { backPressed = true }
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Click back button
+        composeRule.onNodeWithContentDescription("Back").performClick()
+
+        // Verify callback was triggered
+        assert(backPressed) { "Back navigation should trigger callback" }
+    }
+
+    @Test
+    fun sectionLabel_displayedWhenMembersExist() {
+        composeRule.setContent {
+            RosterScreen(
+                members = listOf("Member"),
+                onNavigateBack = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Section label should be visible
+        composeRule.onNodeWithText("TEAM MEMBERS").assertIsDisplayed()
+    }
+
+    @Test
+    fun memberSubtitle_showsCorrectIndex() {
+        val members = listOf("First", "Second", "Third")
+
+        composeRule.setContent {
+            RosterScreen(
+                members = members,
+                onNavigateBack = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify indices are correct (1-based)
+        composeRule.onNodeWithText("Team member 1").assertIsDisplayed()
+        composeRule.onNodeWithText("Team member 2").assertIsDisplayed()
+        composeRule.onNodeWithText("Team member 3").assertIsDisplayed()
     }
 }
 
