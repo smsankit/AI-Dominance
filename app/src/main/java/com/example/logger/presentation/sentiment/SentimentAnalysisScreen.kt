@@ -43,7 +43,6 @@ fun SentimentAnalysisScreen(
     pos: Int,
     neu: Int,
     neg: Int,
-    total: Int,
     onNavigateBack: () -> Unit
 ) {
     Scaffold(
@@ -93,20 +92,6 @@ fun SentimentAnalysisScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     LegendRow(pos = pos, neu = neu, neg = neg)
-
-//                    val insight = when {
-//                        total == 0 -> "No sentiment data available"
-//                        pos - neg > total * 0.3 -> "Very Positive mood"
-//                        pos - neg > 0 -> "Positive mood"
-//                        neg - pos > total * 0.3 -> "Needs attention"
-//                        else -> "Neutral mood"
-//                    }
-//
-//                    Text(
-//                        text = "Based on $total submissions. $insight.",
-//                        style = MaterialTheme.typography.bodyMedium,
-//                        color = MaterialTheme.colorScheme.onSurfaceVariant
-//                    )
                 }
             }
         }
@@ -176,18 +161,28 @@ private fun PieChart(
 
 @Composable
 private fun LegendRow(pos: Int, neu: Int, neg: Int) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        LegendItem(color = Color(0xFF4CAF50), label = "Positive", count = pos)
-        LegendItem(color = Color(0xFFFFC107), label = "Neutral", count = neu)
-        LegendItem(color = Color(0xFFF44336), label = "Negative", count = neg)
+    val total = (pos + neu + neg).coerceAtLeast(1)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        LegendItem(color = Color(0xFF4CAF50), label = "Positive", count = pos, total = total)
+        LegendItem(color = Color(0xFFFFC107), label = "Neutral", count = neu, total = total)
+        LegendItem(color = Color(0xFFF44336), label = "Negative", count = neg, total = total)
     }
 }
 
 @Composable
-private fun LegendItem(color: Color, label: String, count: Int) {
+private fun LegendItem(color: Color, label: String, count: Int, total: Int) {
+    val percentage = ((count / total.toFloat()) * 100).toInt()
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(color))
         Spacer(modifier = Modifier.size(6.dp))
-        Text(text = "$label: $count", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text = "$label: $count (${percentage}%)",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

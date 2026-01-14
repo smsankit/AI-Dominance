@@ -288,7 +288,6 @@ fun AppNavHost() {
                 pos = pos,
                 neu = neu,
                 neg = neg,
-                total = total,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
