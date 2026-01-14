@@ -75,7 +75,8 @@ class SubmitStandupScreenTest {
                 page: Int?,
                 size: Int?,
                 teamMemberId: Long?,
-                standupDate: String?
+                standupDate: String?,
+                status: String?
             ) = throw UnsupportedOperationException()
         }
     }

@@ -1,10 +1,10 @@
 package com.example.logger.domain.model
 
 data class StandupEntryData(
-    val id: Long,
-    val standupDate: String,
-    val yesterdayWork: String,
-    val todayPlan: String,
+    val id: Long?,
+    val standupDate: String?,
+    val yesterdayWork: String?,
+    val todayPlan: String?,
     val blockers: String?,
     val teamMemberId: Long,
     val teamId: Long,

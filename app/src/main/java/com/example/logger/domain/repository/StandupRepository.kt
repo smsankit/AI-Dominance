@@ -15,6 +15,7 @@ interface StandupRepository {
         page: Int? = null,
         size: Int? = null,
         teamMemberId: Long? = null,
-        standupDate: String? = null
+        standupDate: String? = null,
+        status: String? = null
     ): NetworkResult<PaginatedStandupEntriesData>
 }

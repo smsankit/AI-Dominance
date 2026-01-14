@@ -1,6 +1,7 @@
 package com.example.logger.presentation.history
 
 import android.app.DatePickerDialog
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -31,11 +32,23 @@ import java.util.*
 @Composable
 fun HistoryScreen(
     onNavigateBack: () -> Unit,
+    onNavigateMissing: (List<String>) -> Unit = {},
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val vm: HistoryViewModel = viewModel
     val state by vm.uiState.collectAsState()
     val context = LocalContext.current
+
+    // Debug: Log state changes
+    SideEffect {
+        Log.d("HistoryScreen", "===== STATE UPDATE =====")
+        Log.d("HistoryScreen", "isLoading: ${state.isLoading}")
+        Log.d("HistoryScreen", "submissions count: ${state.submissions.size}")
+        Log.d("HistoryScreen", "missingNames count: ${state.missingNames.size}")
+        Log.d("HistoryScreen", "missingNames: ${state.missingNames}")
+        Log.d("HistoryScreen", "Banner condition: !isLoading (${!state.isLoading}) && missingNames.isNotEmpty() (${state.missingNames.isNotEmpty()}) = ${!state.isLoading && state.missingNames.isNotEmpty()}")
+        Log.d("HistoryScreen", "=====================")
+    }
 
     val inputFormat = remember { DateFormatter.getInputDateFormat() }
     val displayFormat = remember { DateFormatter.getDisplayDateFormat() }
@@ -197,6 +210,41 @@ fun HistoryScreen(
                 }
             }
 
+            /** -------- MISSING STANDUP CARD -------- */
+            if (!state.isLoading && state.missingNames.isNotEmpty()) {
+                item {
+                    Log.d("HistoryScreen", "Rendering missing banner - missingNames: ${state.missingNames}")
+                    ElevatedCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigateMissing(state.missingNames) },
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "${state.missingNames.size} ${if (state.missingNames.size == 1) "team member" else "team members"} missing standup",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Icon(
+                                imageVector = Icons.Outlined.ArrowForward,
+                                contentDescription = "View missing",
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                }
+            }
+
             /** -------- LIST & EMPTY STATE -------- */
             val rows = state.submissions
 
@@ -261,7 +309,7 @@ fun HistoryScreen(
                     }
                 }
             } else {
-                items(rows, key = { it.id }) { s ->
+                items(rows) { s ->
                     val hasBlocker =
                         (s.blockers ?: "").trim().isNotEmpty() &&
                                 (s.blockers ?: "").lowercase() != "none"
@@ -306,7 +354,7 @@ fun HistoryScreen(
                                     Column(modifier = Modifier.weight(1f)) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
-                                                text = s.teamMember?.name ?: "Team Member #${s.teamMemberId}",
+                                                text = s.teamMember.name,
                                                 style = MaterialTheme.typography.titleMedium
                                             )
                                             if (hasBlocker) {
@@ -342,7 +390,7 @@ fun HistoryScreen(
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Text(text = s.yesterdayWork)
+                                Text(text = s.yesterdayWork ?: "N/A")
 
                                 Spacer(Modifier.height(8.dp))
 
@@ -351,7 +399,7 @@ fun HistoryScreen(
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Text(text = s.todayPlan)
+                                Text(text = s.todayPlan ?: "N/A")
 
                                 if (hasBlocker) {
                                     Spacer(Modifier.height(8.dp))

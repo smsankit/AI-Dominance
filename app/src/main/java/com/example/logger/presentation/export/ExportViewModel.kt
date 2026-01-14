@@ -17,6 +17,7 @@ import javax.inject.Inject
 data class ExportUiState(
     val selectedDate: String = "",
     val standupEntries: List<StandupEntryData> = emptyList(),
+    val missingNames: List<String> = emptyList(),
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val error: String? = null,
@@ -35,7 +36,6 @@ class ExportViewModel @Inject constructor(
     val uiState: StateFlow<ExportUiState> = _uiState
 
     init {
-        // Initialize with today's date (IST)
         val today = DateFormatter.getCurrentDateString()
         _uiState.value = _uiState.value.copy(selectedDate = today)
         loadStandups(today)
@@ -57,19 +57,36 @@ class ExportViewModel @Inject constructor(
     private fun loadStandups(date: String, resetList: Boolean = true) {
         viewModelScope.launch {
             if (resetList) {
-                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null, missingNames = emptyList())
             } else {
                 _uiState.value = _uiState.value.copy(isLoadingMore = true, error = null)
             }
 
             val currentState = _uiState.value
+
+            // Call 1: Get all submissions
             val result = getTodayStandup(
-                teamId = 1, // Using hardcoded teamId for now
+                teamId = 1,
                 page = currentState.currentPage,
                 size = currentState.pageSize,
                 teamMemberId = null,
-                standupDate = date
+                standupDate = date,
+                status = null
             )
+
+            // Call 2: Get missing members (only on first page load)
+            val missingResult = if (resetList) {
+                getTodayStandup(
+                    teamId = 1,
+                    page = 0,
+                    size = 100,
+                    teamMemberId = null,
+                    standupDate = date,
+                    status = "MISSING"
+                )
+            } else {
+                null
+            }
 
             when (result) {
                 is NetworkResult.Success -> {
@@ -80,8 +97,18 @@ class ExportViewModel @Inject constructor(
                         currentState.standupEntries + data.items
                     }
 
+                    // Extract missing names
+                    val missingNames = if (resetList && missingResult is NetworkResult.Success) {
+                        missingResult.data.items.map { it.teamMember.name }
+                    } else if (resetList) {
+                        emptyList()
+                    } else {
+                        currentState.missingNames
+                    }
+
                     _uiState.value = _uiState.value.copy(
                         standupEntries = updatedEntries,
+                        missingNames = missingNames,
                         isLoading = false,
                         isLoadingMore = false,
                         error = null,
@@ -94,6 +121,7 @@ class ExportViewModel @Inject constructor(
                 is NetworkResult.Error -> {
                     _uiState.value = _uiState.value.copy(
                         standupEntries = if (resetList) emptyList() else currentState.standupEntries,
+                        missingNames = if (resetList) emptyList() else currentState.missingNames,
                         isLoading = false,
                         isLoadingMore = false,
                         error = result.message ?: "An error occurred"
@@ -103,10 +131,9 @@ class ExportViewModel @Inject constructor(
         }
     }
 
-
     fun exportMarkdownToUri(context: Context, uri: Uri, date: String, standups: List<ExportStandupUiModel>): Boolean {
         return try {
-            val markdown = standupsToMarkdown(date, standups)
+            val markdown = standupsToMarkdown(date, standups, uiState.value.missingNames)
             context.contentResolver.openOutputStream(uri)?.use { it.write(markdown.toByteArray()) }
             true
         } catch (e: Exception) {

@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.logger.presentation.dashboard.DashboardScreen
+import androidx.navigation.navArgument
 import com.example.logger.presentation.home.HomeRoute
 import com.example.logger.presentation.home.HomeViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -20,7 +20,7 @@ import com.example.logger.presentation.submitstandup.SubmitConfirmScreen
 import com.example.logger.presentation.submitstandup.SubmitStandupScreen
 import com.example.logger.presentation.submitstandup.SubmitStandupViewModel
 import androidx.navigation.NavType
-import androidx.navigation.navArgument
+import com.example.logger.presentation.dashboard.DashboardScreen
 import com.example.logger.presentation.history.HistoryScreen
 import com.example.logger.presentation.settings.SettingsScreen
 import com.example.logger.presentation.roster.RosterScreen
@@ -83,7 +83,7 @@ fun AppNavHost() {
                         },
                         onNavigateSettings = { /* TODO: add settings destination when available */ },
                         onNavigateMissing = {
-                            navController.navigate(Destinations.MISSING) {
+                            navController.navigate(Destinations.missing(Destinations.SOURCE_DASHBOARD)) {
                                 popUpTo(Destinations.DASHBOARD) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
@@ -206,7 +206,13 @@ fun AppNavHost() {
         composable(Destinations.HISTORY) {
             RootScaffold(navController = navController) { padding ->
                 Box(Modifier.padding(padding)) {
-                    HistoryScreen(onNavigateBack = { navController.popBackStack() })
+                    HistoryScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateMissing = { missingNames ->
+                            // Navigate to Missing screen from History (without submit button)
+                            navController.navigate(Destinations.missing(Destinations.SOURCE_HISTORY))
+                        }
+                    )
                 }
             }
         }
@@ -234,7 +240,15 @@ fun AppNavHost() {
             }
         }
         // Missing standups screen route
-        composable(Destinations.MISSING) { backStackEntry ->
+        composable(
+            route = Destinations.MISSING,
+            arguments = listOf(
+                navArgument(Destinations.ARG_SOURCE) {
+                    type = NavType.StringType
+                    defaultValue = Destinations.SOURCE_DASHBOARD
+                }
+            )
+        ) { backStackEntry ->
             // Missing should not show FAB or bottom bar according to requirements.
             // Render without RootScaffold to hide chrome.
             // Get ViewModel from DASHBOARD backstack entry to avoid unnecessary API calls
@@ -250,6 +264,10 @@ fun AppNavHost() {
                 homeVm.load(resetList = true, fetchAllStandups = true)
             }
 
+            // Get source to determine if submit button should be shown
+            val source = backStackEntry.arguments?.getString(Destinations.ARG_SOURCE) ?: Destinations.SOURCE_DASHBOARD
+            val showSubmitButton = source == Destinations.SOURCE_DASHBOARD
+
             // Use actual pending members list from state which is calculated based on teamMemberId
             MissingScreen(
                 pendingMembers = state.value.pending,
@@ -260,7 +278,8 @@ fun AppNavHost() {
                         launchSingleTop = true
                         restoreState = false
                     }
-                }
+                },
+                showSubmitButton = showSubmitButton
             )
         }
         composable(Destinations.EXPORT) {

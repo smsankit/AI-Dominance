@@ -65,7 +65,8 @@ class HistoryScreenTest {
                 page: Int?,
                 size: Int?,
                 teamMemberId: Long?,
-                standupDate: String?
+                standupDate: String?,
+                status: String?
             ): NetworkResult<PaginatedStandupEntriesData> {
                 val meta = PaginationMetaData(
                     page = page ?: 0,
@@ -91,7 +92,8 @@ class HistoryScreenTest {
                 page: Int?,
                 size: Int?,
                 teamMemberId: Long?,
-                standupDate: String?
+                standupDate: String?,
+                status: String?
             ): NetworkResult<PaginatedStandupEntriesData> {
                 return NetworkResult.Error(message)
             }

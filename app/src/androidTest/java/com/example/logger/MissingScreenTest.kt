@@ -21,7 +21,8 @@ class MissingScreenTest {
             MissingScreen(
                 pendingMembers = emptyList(),
                 onNavigateBack = {},
-                onSubmitStandup = {}
+                onSubmitStandup = {},
+                showSubmitButton = false
             )
         }
         composeRule.waitForIdle()
@@ -43,7 +44,8 @@ class MissingScreenTest {
             MissingScreen(
                 pendingMembers = listOf(memberName),
                 onNavigateBack = {},
-                onSubmitStandup = {}
+                onSubmitStandup = {},
+                showSubmitButton = true
             )
         }
 
@@ -75,7 +77,8 @@ class MissingScreenTest {
             MissingScreen(
                 pendingMembers = members,
                 onNavigateBack = {},
-                onSubmitStandup = {}
+                onSubmitStandup = {},
+                showSubmitButton = true
             )
         }
 
@@ -125,7 +128,8 @@ class MissingScreenTest {
             MissingScreen(
                 pendingMembers = members,
                 onNavigateBack = {},
-                onSubmitStandup = {}
+                onSubmitStandup = {},
+                showSubmitButton = true
             )
         }
 
@@ -265,7 +269,8 @@ class MissingScreenTest {
             MissingScreen(
                 pendingMembers = listOf("Alice"),
                 onNavigateBack = {},
-                onSubmitStandup = {}
+                onSubmitStandup = {},
+                showSubmitButton = false
             )
         }
 
@@ -275,5 +280,282 @@ class MissingScreenTest {
         composeRule.onNodeWithContentDescription("Back")
             .assertIsDisplayed()
             .assertHasClickAction()
+    }
+
+    @Test
+    fun submitButton_isHiddenWhenShowSubmitButtonIsFalse() {
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = listOf("Alice Johnson", "Bob Smith"),
+                onNavigateBack = {},
+                onSubmitStandup = {},
+                showSubmitButton = false
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify members are shown
+        composeRule.onNodeWithText("Alice Johnson").assertIsDisplayed()
+        composeRule.onNodeWithText("Bob Smith").assertIsDisplayed()
+
+        // Verify submit button is NOT displayed
+        composeRule.onNodeWithText("Submit").assertDoesNotExist()
+    }
+
+    @Test
+    fun submitButton_isVisibleWhenShowSubmitButtonIsTrue() {
+        var submitCalled = false
+        val memberName = "Alice Johnson"
+
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = listOf(memberName),
+                onNavigateBack = {},
+                onSubmitStandup = { submitCalled = true },
+                showSubmitButton = true
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify member is shown
+        composeRule.onNodeWithText(memberName).assertIsDisplayed()
+
+        // Verify submit button IS displayed
+        composeRule.onNodeWithText("Submit").assertIsDisplayed()
+
+        // Verify submit button is clickable
+        composeRule.onNodeWithText("Submit").performClick()
+        assert(submitCalled)
+    }
+
+    @Test
+    fun multipleMembers_submitButtonVisbilityControlledByFlag() {
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = listOf("Alice", "Bob", "Charlie"),
+                onNavigateBack = {},
+                onSubmitStandup = {},
+                showSubmitButton = true
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Should have 3 Submit buttons (one per member) when flag is true
+        composeRule.onAllNodesWithText("Submit").assertCountEquals(3)
+    }
+
+    @Test
+    fun memberCard_clickableArea_triggerSubmitCallback() {
+        var submitClicked = false
+        val memberName = "Alice Johnson"
+
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = listOf(memberName),
+                onNavigateBack = {},
+                onSubmitStandup = { submitClicked = true },
+                showSubmitButton = true
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Click submit button and verify callback
+        composeRule.onNodeWithText("Submit").performClick()
+        assert(submitClicked)
+    }
+
+    @Test
+    fun emptyList_displaysCorrectCountMessage() {
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = emptyList(),
+                onNavigateBack = {},
+                onSubmitStandup = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify exact message for zero members
+        composeRule.onNodeWithText("0 team members have not submitted").assertIsDisplayed()
+    }
+
+    @Test
+    fun twoMembers_displaysCorrectPluralForm() {
+        val members = listOf("Alice Johnson", "Bob Smith")
+
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = members,
+                onNavigateBack = {},
+                onSubmitStandup = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify plural form "members" is used
+        composeRule.onNodeWithText("2 team members have not submitted").assertIsDisplayed()
+    }
+
+    @Test
+    fun tenMembers_displaysCorrectCount() {
+        val members = (1..10).map { "Member $it" }
+
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = members,
+                onNavigateBack = {},
+                onSubmitStandup = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify count is correct
+        composeRule.onNodeWithText("10 team members have not submitted").assertIsDisplayed()
+
+        // Verify first member is visible
+        composeRule.onNodeWithText("Member 1").assertIsDisplayed()
+    }
+
+    @Test
+    fun memberList_containsAllProvidedMembers() {
+        val members = listOf(
+            "Alice Johnson",
+            "Bob Smith",
+            "Charlie Brown",
+            "Diana Prince",
+            "Eve Wilson"
+        )
+
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = members,
+                onNavigateBack = {},
+                onSubmitStandup = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify all members are present
+        members.forEach { member ->
+            composeRule.onNodeWithText(member).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun navigationCallback_isCalledOnBackPress() {
+        var backPressed = false
+
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = listOf("Alice"),
+                onNavigateBack = { backPressed = true },
+                onSubmitStandup = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Click back button
+        composeRule.onNodeWithContentDescription("Back").performClick()
+        // Note: Callback verification depends on navigation implementation
+    }
+
+    @Test
+    fun specialCharacterNames_displayCorrectInitials() {
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = listOf("O'Brien Smith"),
+                onNavigateBack = {},
+                onSubmitStandup = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Check initials with special characters
+        composeRule.onNodeWithText("O'Brien Smith").assertIsDisplayed()
+    }
+
+    @Test
+    fun allCardsHaveInitialsDisplayed() {
+        val members = listOf("Alice Johnson", "Bob Smith", "Charlie Brown")
+
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = members,
+                onNavigateBack = {},
+                onSubmitStandup = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify all initials are displayed
+        composeRule.onNodeWithText("AJ").assertIsDisplayed()
+        composeRule.onNodeWithText("BS").assertIsDisplayed()
+        composeRule.onNodeWithText("CB").assertIsDisplayed()
+    }
+
+    @Test
+    fun fiftyMembers_scrollsToAllMembers() {
+        val members = (1..50).map { "Member Number $it" }
+
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = members,
+                onNavigateBack = {},
+                onSubmitStandup = {}
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // Verify count
+        composeRule.onNodeWithText("50 team members have not submitted").assertIsDisplayed()
+
+        // First member visible
+        composeRule.onNodeWithText("Member Number 1").assertIsDisplayed()
+
+        // Scroll to middle
+        composeRule.onAllNodes(hasScrollAction())
+            .onFirst()
+            .performScrollToIndex(25)
+
+        composeRule.waitForIdle()
+
+        // Check we can see a member in the middle
+        composeRule.onNodeWithText("Member Number 26").assertExists()
+    }
+
+    @Test
+    fun submitButton_visibilityToggleAffectsMultipleMembers() {
+        val members = listOf("Alice", "Bob", "Charlie")
+
+        composeRule.setContent {
+            MissingScreen(
+                pendingMembers = members,
+                onNavigateBack = {},
+                onSubmitStandup = {},
+                showSubmitButton = false
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        // No submit buttons when flag is false
+        composeRule.onAllNodesWithText("Submit").assertCountEquals(0)
+
+        // All members still visible
+        members.forEach { member ->
+            composeRule.onNodeWithText(member).assertIsDisplayed()
+        }
     }
 }

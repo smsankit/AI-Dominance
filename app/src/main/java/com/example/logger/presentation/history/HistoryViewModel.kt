@@ -1,5 +1,6 @@
 package com.example.logger.presentation.history
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.logger.core.network.NetworkResult
@@ -19,6 +20,7 @@ data class HistoryUiState(
         add(Calendar.DAY_OF_MONTH, -1)
     }.time, // Start from yesterday
     val submissions: List<StandupEntryData> = emptyList(),
+    val missingNames: List<String> = emptyList(),
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val error: String? = null,
@@ -86,31 +88,78 @@ class HistoryViewModel @Inject constructor(
     private fun refresh(resetList: Boolean = true) {
         viewModelScope.launch {
             if (resetList) {
-                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = true,
+                    error = null,
+                    submissions = emptyList(),
+                    missingNames = emptyList()
+                )
             } else {
                 _uiState.value = _uiState.value.copy(isLoadingMore = true, error = null)
             }
 
             val currentState = _uiState.value
             val dateStr = DateFormatter.getApiDateFormat().format(currentState.selectedDate)
+
+            // Call submissions API (sequential, not async)
+            Log.d("HistoryViewModel", "Calling Submissions API for date: $dateStr")
             val result = getTodayStandup(
-                teamId = 1, // Using hardcoded teamId for now
+                teamId = 1,
                 page = currentState.currentPage,
                 size = currentState.pageSize,
-                standupDate = dateStr
+                standupDate = dateStr,
+                status = null
             )
+
+            // Call missing API (sequential, not async) only on first page load
+            val missingResult = if (resetList) {
+                Log.d("HistoryViewModel", "Calling MISSING API for date: $dateStr")
+                getTodayStandup(
+                    teamId = 1,
+                    page = 0,
+                    size = 100,
+                    standupDate = dateStr,
+                    status = "MISSING"
+                )
+            } else {
+                null
+            }
+
+
+            Log.d("HistoryViewModel", "===== API RESULTS =====")
+            Log.d("HistoryViewModel", "Submissions API result: ${result is NetworkResult.Success}")
+            Log.d("HistoryViewModel", "Missing API result: ${missingResult is NetworkResult.Success}")
+            if (missingResult is NetworkResult.Error) {
+                Log.d("HistoryViewModel", "Missing API ERROR - Message: ${missingResult.message}, Code: ${missingResult.code}")
+            }
+            if (missingResult is NetworkResult.Success) {
+                Log.d("HistoryViewModel", "Missing API SUCCESS - Items: ${missingResult.data.items.size}")
+            }
+            Log.d("HistoryViewModel", "========================")
 
             when (result) {
                 is NetworkResult.Success -> {
                     val data = result.data
+                    // Submissions list for display
                     val updatedSubmissions = if (resetList) {
                         data.items
                     } else {
                         currentState.submissions + data.items
                     }
 
+                    // Extract missing member names from MISSING API
+                    val missingMemberNames = if (resetList && missingResult is NetworkResult.Success) {
+                        missingResult.data.items.map { it.teamMember.name }
+                    } else if (resetList) {
+                        emptyList()
+                    } else {
+                        currentState.missingNames
+                    }
+
+                    Log.d("HistoryViewModel", "Setting state - submissions: ${updatedSubmissions.size}, missingNames: ${missingMemberNames.size} = $missingMemberNames")
                     _uiState.value = _uiState.value.copy(
                         submissions = updatedSubmissions,
+                        missingNames = missingMemberNames,
                         isLoading = false,
                         isLoadingMore = false,
                         error = null,
@@ -123,6 +172,7 @@ class HistoryViewModel @Inject constructor(
                 is NetworkResult.Error -> {
                     _uiState.value = _uiState.value.copy(
                         submissions = if (resetList) emptyList() else currentState.submissions,
+                        missingNames = if (resetList) emptyList() else currentState.missingNames,
                         isLoading = false,
                         isLoadingMore = false,
                         error = result.message ?: "An error occurred"

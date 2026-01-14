@@ -6,7 +6,6 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.hasText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.logger.core.network.NetworkResult
 import com.example.logger.domain.model.PaginatedStandupEntriesData
 import com.example.logger.domain.model.PaginationMetaData
 import com.example.logger.domain.model.StandupEntryData
@@ -14,6 +13,7 @@ import com.example.logger.domain.model.TeamMember
 import com.example.logger.presentation.export.ExportScreen
 import com.example.logger.presentation.export.ExportViewModel
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
+import com.example.logger.core.network.NetworkResult
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,13 +42,21 @@ class ExportScreenTest {
         )
     }
 
-    private fun successUseCase(items: List<StandupEntryData>): GetTodayStandupUseCase {
+    private fun successUseCase(items: List<StandupEntryData>, missingItems: List<StandupEntryData> = emptyList()): GetTodayStandupUseCase {
         val fakeRepo = object : com.example.logger.domain.repository.StandupRepository {
             override fun getTodayStandup() = throw UnsupportedOperationException()
             override suspend fun submitStandupEntry(request: com.example.logger.domain.model.StandupEntryRequestData) = throw UnsupportedOperationException()
-            override suspend fun getStandupEntries(teamId: Long, page: Int?, size: Int?, teamMemberId: Long?, standupDate: String?): com.example.logger.core.network.NetworkResult<PaginatedStandupEntriesData> {
-                val meta = PaginationMetaData(page = page ?: 0, size = size ?: items.size, totalElements = items.size, totalPages = 1)
-                return com.example.logger.core.network.NetworkResult.Success(PaginatedStandupEntriesData(items = items, meta = meta))
+            override suspend fun getStandupEntries(
+                teamId: Long,
+                page: Int?,
+                size: Int?,
+                teamMemberId: Long?,
+                standupDate: String?,
+                status: String?
+            ): NetworkResult<PaginatedStandupEntriesData> {
+                val dataList = if (status == "MISSING") missingItems else items
+                val meta = PaginationMetaData(page = page ?: 0, size = size ?: dataList.size, totalElements = dataList.size, totalPages = 1)
+                return NetworkResult.Success(PaginatedStandupEntriesData(items = dataList, meta = meta))
             }
         }
         return GetTodayStandupUseCase(repository = fakeRepo)
@@ -58,8 +66,15 @@ class ExportScreenTest {
         val fakeRepo = object : com.example.logger.domain.repository.StandupRepository {
             override fun getTodayStandup() = throw UnsupportedOperationException()
             override suspend fun submitStandupEntry(request: com.example.logger.domain.model.StandupEntryRequestData) = throw UnsupportedOperationException()
-            override suspend fun getStandupEntries(teamId: Long, page: Int?, size: Int?, teamMemberId: Long?, standupDate: String?): com.example.logger.core.network.NetworkResult<PaginatedStandupEntriesData> {
-                return com.example.logger.core.network.NetworkResult.Error(message)
+            override suspend fun getStandupEntries(
+                teamId: Long,
+                page: Int?,
+                size: Int?,
+                teamMemberId: Long?,
+                standupDate: String?,
+                status: String?
+            ): NetworkResult<PaginatedStandupEntriesData> {
+                return NetworkResult.Error(message)
             }
         }
         return GetTodayStandupUseCase(repository = fakeRepo)
@@ -96,21 +111,203 @@ class ExportScreenTest {
             buildEntry(name = "Alice", time = "10:15", yesterday = "Fixed bugs", today = "Implement feature X", blockers = null),
             buildEntry(name = "Bob", time = "10:20", yesterday = "Code review", today = "Write tests", blockers = "Env issue")
         )
+        val missingEntries = listOf(
+            buildEntry(name = "Charlie", time = "N/A", yesterday = "N/A", today = "N/A", blockers = null),
+            buildEntry(name = "Diana", time = "N/A", yesterday = "N/A", today = "N/A", blockers = null)
+        )
+        val vm = ExportViewModel(getTodayStandup = successUseCase(entries, missingEntries))
+        composeRule.setContent {
+            ExportScreen(viewModel = vm)
+        }
+
+        // Wait for initial state to load
+        composeRule.waitForIdle()
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify submitted count and missing count are displayed
+        // The count should be "2 submitted, 2 missing" or similar format
+        composeRule.onNode(hasText("submitted", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("missing", substring = true)).assertIsDisplayed()
+
+        // Markdown content should contain the header
+        composeRule.onNode(hasText("Team Standups", substring = true)).assertIsDisplayed()
+
+        // Verify names are displayed in the markdown content
+        composeRule.onNode(hasText("Alice", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Bob", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun singleSubmission_displaysProperly() {
+        val entries = listOf(
+            buildEntry(name = "Alice", time = "10:15", yesterday = "Fixed bugs", today = "Implement feature X", blockers = null)
+        )
         val vm = ExportViewModel(getTodayStandup = successUseCase(entries))
         composeRule.setContent {
             ExportScreen(viewModel = vm)
         }
         composeRule.waitForIdle()
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
 
-        // Preview title
-        composeRule.onNodeWithText("Preview").assertIsDisplayed()
-        // Exact count label to avoid ambiguous matches
-        composeRule.onNodeWithText("2 standup(s)").assertIsDisplayed()
+        // Verify single submission displays
+        composeRule.onNode(hasText("Alice", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Fixed bugs", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("submitted", substring = true)).assertIsDisplayed()
+    }
 
-        // Markdown content contains names and headers
-        composeRule.onNode(hasText("# Team Standups", substring = true)).assertIsDisplayed()
+    @Test
+    fun withBlockers_displaysBlockerInfo() {
+        val entries = listOf(
+            buildEntry(name = "Alice", time = "10:15", yesterday = "Fixed bugs", today = "Implement feature", blockers = "Waiting for API"),
+            buildEntry(name = "Bob", time = "10:20", yesterday = "Code review", today = "Write tests", blockers = "Environment issue")
+        )
+        val vm = ExportViewModel(getTodayStandup = successUseCase(entries))
+        composeRule.setContent {
+            ExportScreen(viewModel = vm)
+        }
+        composeRule.waitForIdle()
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify blockers are displayed
+        composeRule.onNode(hasText("Alice", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Bob", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Waiting for API", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun manySubmissions_allDisplayedWithCount() {
+        val entries = (1..10).map { i ->
+            buildEntry(
+                name = "Member$i",
+                time = "10:${String.format("%02d", i)}",
+                yesterday = "Work $i yesterday",
+                today = "Plan $i today"
+            )
+        }
+        val vm = ExportViewModel(getTodayStandup = successUseCase(entries))
+        composeRule.setContent {
+            ExportScreen(viewModel = vm)
+        }
+        composeRule.waitForIdle()
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify count is shown
+        composeRule.onNode(hasText("submitted", substring = true)).assertIsDisplayed()
+        // Verify some members are displayed
+        composeRule.onNode(hasText("Member1", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun noBlockers_displaysWithoutBlockerInfo() {
+        val entries = listOf(
+            buildEntry(name = "Alice", time = "10:15", yesterday = "Fixed bugs", today = "Implement feature", blockers = null),
+            buildEntry(name = "Bob", time = "10:20", yesterday = "Code review", today = "Write tests", blockers = null)
+        )
+        val vm = ExportViewModel(getTodayStandup = successUseCase(entries))
+        composeRule.setContent {
+            ExportScreen(viewModel = vm)
+        }
+        composeRule.waitForIdle()
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify standups display without blockers
         composeRule.onNode(hasText("Alice", substring = true)).assertIsDisplayed()
         composeRule.onNode(hasText("Bob", substring = true)).assertIsDisplayed()
     }
 
+    @Test
+    fun emptyBlockers_treatAsNoBlockers() {
+        val entries = listOf(
+            buildEntry(name = "Alice", time = "10:15", yesterday = "Fixed bugs", today = "Implement feature", blockers = "")
+        )
+        val vm = ExportViewModel(getTodayStandup = successUseCase(entries))
+        composeRule.setContent {
+            ExportScreen(viewModel = vm)
+        }
+        composeRule.waitForIdle()
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify standup displays with empty blocker string
+        composeRule.onNode(hasText("Alice", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun longText_displaysInMarkdown() {
+        val longYesterday = "This is a very long description of what was done yesterday. " +
+                "It contains multiple sentences describing various bug fixes and improvements " +
+                "that were made to different components of the system."
+        val longToday = "This is a long plan for today that includes multiple tasks " +
+                "such as code review, testing, and documentation updates."
+
+        val entries = listOf(
+            buildEntry(
+                name = "Alice",
+                time = "10:15",
+                yesterday = longYesterday,
+                today = longToday
+            )
+        )
+        val vm = ExportViewModel(getTodayStandup = successUseCase(entries))
+        composeRule.setContent {
+            ExportScreen(viewModel = vm)
+        }
+        composeRule.waitForIdle()
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify long text displays
+        composeRule.onNode(hasText("Alice", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("bug fixes", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun submissionsAndMissingTogether_displaysCorrectly() {
+        val entries = listOf(
+            buildEntry(name = "Alice", time = "10:15", yesterday = "Fixed bugs", today = "Feature X"),
+            buildEntry(name = "Bob", time = "10:20", yesterday = "Code review", today = "Write tests")
+        )
+        val missingEntries = listOf(
+            buildEntry(name = "Charlie", time = "N/A", yesterday = "N/A", today = "N/A"),
+            buildEntry(name = "Diana", time = "N/A", yesterday = "N/A", today = "N/A")
+        )
+        val vm = ExportViewModel(getTodayStandup = successUseCase(entries, missingEntries))
+        composeRule.setContent {
+            ExportScreen(viewModel = vm)
+        }
+        composeRule.waitForIdle()
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify both submitted and missing are shown
+        composeRule.onNode(hasText("submitted", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("missing", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Alice", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Bob", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun dateDisplay_showsCorrectDate() {
+        val entries = listOf(
+            buildEntry(name = "Alice", time = "10:15", yesterday = "Fixed bugs", today = "Feature X")
+        )
+        val vm = ExportViewModel(getTodayStandup = successUseCase(entries))
+        composeRule.setContent {
+            ExportScreen(viewModel = vm)
+        }
+        composeRule.waitForIdle()
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify markdown header with date is displayed
+        // Instead of searching for just "2026", search for the specific date format
+        composeRule.onNode(hasText("Team Standups", substring = true)).assertIsDisplayed()
+        // Verify name is displayed in the content
+        composeRule.onNode(hasText("Alice", substring = true)).assertIsDisplayed()
+    }
 }

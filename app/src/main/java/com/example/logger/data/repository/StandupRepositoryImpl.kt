@@ -58,7 +58,8 @@ class StandupRepositoryImpl @Inject constructor(
         page: Int?,
         size: Int?,
         teamMemberId: Long?,
-        standupDate: String?
+        standupDate: String?,
+        status: String?
     ): NetworkResult<PaginatedStandupEntriesData> {
         return try {
             when (val result = safeNetworkCall {
@@ -67,7 +68,8 @@ class StandupRepositoryImpl @Inject constructor(
                     page = page,
                     size = size,
                     teamMemberId = teamMemberId,
-                    standupDate = standupDate
+                    standupDate = standupDate,
+                    status = status
                 )
             }) {
                 is NetworkResult.Success -> NetworkResult.Success(result.data.toDomain())

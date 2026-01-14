@@ -107,8 +107,8 @@ class HomeViewModel @Inject constructor(
                         Standup(
                             id = entry.id.toString(),
                             name = memberName,
-                            yesterday = entry.yesterdayWork,
-                            today = entry.todayPlan,
+                            yesterday = entry.yesterdayWork!!,
+                            today = entry.todayPlan!!,
                             blockers = entry.blockers,
                             time = time,
                             editedAt = entry.updatedAt

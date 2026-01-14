@@ -16,8 +16,14 @@ object Destinations {
     const val HISTORY = "history"
     const val SETTINGS = "settings"
     const val ROSTER = "roster"
-    const val MISSING = "missing"
+    const val MISSING_BASE = "missing"
+    const val ARG_SOURCE = "source"
+    const val SOURCE_DASHBOARD = "dashboard"
+    const val SOURCE_HISTORY = "history"
+    const val MISSING = "$MISSING_BASE?$ARG_SOURCE={$ARG_SOURCE}"
     const val EXPORT = "export"
+
+    fun missing(source: String = SOURCE_DASHBOARD) = "$MISSING_BASE?$ARG_SOURCE=$source"
 
     // Sentiment analysis
     const val SENTIMENT_BASE = "sentiment"

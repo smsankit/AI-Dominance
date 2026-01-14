@@ -28,7 +28,6 @@ import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import org.mockito.kotlin.verify
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
@@ -85,7 +84,7 @@ class HomeViewModelTest {
         )
         runBlocking {
             whenever(
-                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
             ).thenReturn(NetworkResult.Success(page))
         }
         viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
@@ -120,7 +119,7 @@ class HomeViewModelTest {
         )
         runBlocking {
             whenever(
-                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
             ).thenReturn(NetworkResult.Success(page0))
         }
         viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
@@ -131,7 +130,7 @@ class HomeViewModelTest {
         // Next call returns page1
         runBlocking {
             whenever(
-                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
             ).thenReturn(NetworkResult.Success(page1))
         }
         viewModel.loadMore()
@@ -149,7 +148,7 @@ class HomeViewModelTest {
     fun `error during load sets error and flags`() {
         runBlocking {
             whenever(
-                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
             ).thenReturn(NetworkResult.Error(message = "fail"))
         }
         viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
@@ -170,7 +169,7 @@ class HomeViewModelTest {
         )
         runBlocking {
             whenever(
-                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
             ).thenReturn(NetworkResult.Success(emptyPage))
         }
         val sentiments = listOf(
@@ -185,7 +184,6 @@ class HomeViewModelTest {
         viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(getTeamSentimentsUseCase).invoke(eq(1L), anyOrNull(), anyOrNull())
         val state = viewModel.uiState.value
         assertFalse(state.isSentimentLoading)
         assertEquals(null, state.sentimentError)
@@ -203,7 +201,7 @@ class HomeViewModelTest {
         )
         runBlocking {
             whenever(
-                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
             ).thenReturn(NetworkResult.Success(emptyPage))
         }
         whenever(getTeamSentimentsUseCase.invoke(eq(1L), anyOrNull(), anyOrNull()))

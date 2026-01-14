@@ -21,7 +21,8 @@ import com.example.logger.R
 fun MissingScreen(
     pendingMembers: List<String>, // Actual list of members who haven't submitted
     onNavigateBack: () -> Unit,
-    onSubmitStandup: (String) -> Unit // Pass member name
+    onSubmitStandup: (String) -> Unit = {}, // Pass member name
+    showSubmitButton: Boolean = false // Control submit button visibility
 ) {
     val pendingCount = pendingMembers.size
 
@@ -74,10 +75,12 @@ fun MissingScreen(
                                     Text(name, style = MaterialTheme.typography.titleMedium)
                                     Text(stringResource(R.string.missing_row_subtitle), style = MaterialTheme.typography.bodySmall, color = Color(0xFFD32F2F))
                                 }
-                                Button(onClick = { onSubmitStandup(name) }) {
-                                    Icon(Icons.Outlined.EditNote, contentDescription = null)
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("Submit")
+                                if (showSubmitButton) {
+                                    Button(onClick = { onSubmitStandup(name) }) {
+                                        Icon(Icons.Outlined.EditNote, contentDescription = null)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Submit")
+                                    }
                                 }
                             }
                         }

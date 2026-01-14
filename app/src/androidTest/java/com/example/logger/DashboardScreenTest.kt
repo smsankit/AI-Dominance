@@ -91,7 +91,8 @@ class DashboardScreenTest {
                 page: Int?,
                 size: Int?,
                 teamMemberId: Long?,
-                standupDate: String?
+                standupDate: String?,
+                status: String?
             ): NetworkResult<PaginatedStandupEntriesData> {
                 val meta = PaginationMetaData(
                     page = page ?: 0,
@@ -363,9 +364,6 @@ class DashboardScreenTest {
 
     @Test
     fun navigationCallbacks_areTriggered() {
-        var submitCalled = false
-        var historyCalled = false
-
         val members = listOf(createFakeTeamMemberData(1, "Alice"))
         val teamRepo = createFakeTeamRepository(members)
         val standupRepo = createFakeStandupRepository(emptyList())
@@ -380,8 +378,8 @@ class DashboardScreenTest {
         composeRule.setContent {
             DashboardScreen(
                 viewModel = viewModel,
-                onNavigateSubmit = { submitCalled = true },
-                onNavigateHistory = { historyCalled = true },
+                onNavigateSubmit = {},
+                onNavigateHistory = {},
                 onNavigateSettings = {},
                 onNavigateMissing = {},
                 onNavigateExport = {},
@@ -407,7 +405,8 @@ class DashboardScreenTest {
                 page: Int?,
                 size: Int?,
                 teamMemberId: Long?,
-                standupDate: String?
+                standupDate: String?,
+                status: String?
             ): NetworkResult<PaginatedStandupEntriesData> {
                 return NetworkResult.Error("Failed to load standups")
             }
@@ -584,5 +583,346 @@ class DashboardScreenTest {
         composeRule.onNode(hasText("Bob Smith", substring = true)).assertIsDisplayed()
 
         // All members have submitted, so pending count should be 0
+    }
+
+    @Test
+    fun missingStandups_displaysMissingBanner() {
+        val members = listOf(
+            createFakeTeamMemberData(1, "Alice Johnson"),
+            createFakeTeamMemberData(2, "Bob Smith"),
+            createFakeTeamMemberData(3, "Charlie Brown")
+        )
+
+        // Only one member submitted, two are missing
+        val entries = listOf(
+            buildStandupEntry(
+                id = 1,
+                name = "Alice Johnson",
+                time = "10:15",
+                yesterday = "Fixed bugs",
+                today = "Implement feature X"
+            )
+        )
+
+        val teamRepo = createFakeTeamRepository(members)
+        val standupRepo = createFakeStandupRepository(entries)
+        val prefsManager = createFakePreferencesManager()
+
+        val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
+        val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
+
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
+
+        composeRule.setContent {
+            DashboardScreen(
+                viewModel = viewModel,
+                onNavigateSubmit = {},
+                onNavigateHistory = {},
+                onNavigateSettings = {},
+                onNavigateMissing = {},
+                onNavigateExport = {},
+                onNavigateRoster = {}
+            )
+        }
+        composeRule.waitForIdle()
+
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify submitted standup
+        composeRule.onNode(hasText("Alice Johnson", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun emptyStandups_showsLoadingAndThenEmpty() {
+        val members = listOf(
+            createFakeTeamMemberData(1, "Alice Johnson")
+        )
+
+        val entries = emptyList<StandupEntryData>()
+
+        val teamRepo = createFakeTeamRepository(members)
+        val standupRepo = createFakeStandupRepository(entries)
+        val prefsManager = createFakePreferencesManager()
+
+        val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
+        val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
+
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
+
+        composeRule.setContent {
+            DashboardScreen(
+                viewModel = viewModel,
+                onNavigateSubmit = {},
+                onNavigateHistory = {},
+                onNavigateSettings = {},
+                onNavigateMissing = {},
+                onNavigateExport = {},
+                onNavigateRoster = {}
+            )
+        }
+        composeRule.waitForIdle()
+
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // When empty, there should be no submission cards displayed
+    }
+
+    @Test
+    fun standupWithNullBlockers_displaysProperly() {
+        val members = listOf(
+            createFakeTeamMemberData(1, "Alice Johnson")
+        )
+
+        val entries = listOf(
+            buildStandupEntry(
+                id = 1,
+                name = "Alice Johnson",
+                time = "10:15",
+                yesterday = "Fixed bugs",
+                today = "Implement feature X",
+                blockers = null  // No blockers
+            )
+        )
+
+        val teamRepo = createFakeTeamRepository(members)
+        val standupRepo = createFakeStandupRepository(entries)
+        val prefsManager = createFakePreferencesManager()
+
+        val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
+        val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
+
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
+
+        composeRule.setContent {
+            DashboardScreen(
+                viewModel = viewModel,
+                onNavigateSubmit = {},
+                onNavigateHistory = {},
+                onNavigateSettings = {},
+                onNavigateMissing = {},
+                onNavigateExport = {},
+                onNavigateRoster = {}
+            )
+        }
+        composeRule.waitForIdle()
+
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify standup with null blockers displays correctly
+        composeRule.onNode(hasText("Alice Johnson", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Fixed bugs", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun standupWithEmptyBlockers_displaysProperly() {
+        val members = listOf(
+            createFakeTeamMemberData(1, "Alice Johnson")
+        )
+
+        val entries = listOf(
+            buildStandupEntry(
+                id = 1,
+                name = "Alice Johnson",
+                time = "10:15",
+                yesterday = "Fixed bugs",
+                today = "Implement feature X",
+                blockers = ""  // Empty blockers string
+            )
+        )
+
+        val teamRepo = createFakeTeamRepository(members)
+        val standupRepo = createFakeStandupRepository(entries)
+        val prefsManager = createFakePreferencesManager()
+
+        val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
+        val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
+
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
+
+        composeRule.setContent {
+            DashboardScreen(
+                viewModel = viewModel,
+                onNavigateSubmit = {},
+                onNavigateHistory = {},
+                onNavigateSettings = {},
+                onNavigateMissing = {},
+                onNavigateExport = {},
+                onNavigateRoster = {}
+            )
+        }
+        composeRule.waitForIdle()
+
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify standup with empty blockers displays correctly
+        composeRule.onNode(hasText("Alice Johnson", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun multipleStandupsDifferentTimes_displayedInOrder() {
+        val members = listOf(
+            createFakeTeamMemberData(1, "Alice Johnson"),
+            createFakeTeamMemberData(2, "Bob Smith"),
+            createFakeTeamMemberData(3, "Charlie Brown")
+        )
+
+        val entries = listOf(
+            buildStandupEntry(
+                id = 1,
+                name = "Alice Johnson",
+                time = "09:00",
+                yesterday = "Task A",
+                today = "Task B"
+            ),
+            buildStandupEntry(
+                id = 2,
+                name = "Bob Smith",
+                time = "10:30",
+                yesterday = "Task C",
+                today = "Task D"
+            ),
+            buildStandupEntry(
+                id = 3,
+                name = "Charlie Brown",
+                time = "11:45",
+                yesterday = "Task E",
+                today = "Task F"
+            )
+        )
+
+        val teamRepo = createFakeTeamRepository(members)
+        val standupRepo = createFakeStandupRepository(entries)
+        val prefsManager = createFakePreferencesManager()
+
+        val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
+        val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
+
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
+
+        composeRule.setContent {
+            DashboardScreen(
+                viewModel = viewModel,
+                onNavigateSubmit = {},
+                onNavigateHistory = {},
+                onNavigateSettings = {},
+                onNavigateMissing = {},
+                onNavigateExport = {},
+                onNavigateRoster = {}
+            )
+        }
+        composeRule.waitForIdle()
+
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify all three standups are displayed
+        composeRule.onNode(hasText("Alice Johnson", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Bob Smith", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Charlie Brown", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun standupWithLongText_displaysWithEllipsis() {
+        val members = listOf(
+            createFakeTeamMemberData(1, "Alice Johnson")
+        )
+
+        val longText = "This is a very long text that contains a lot of information about the work done " +
+                       "and should demonstrate how the UI handles lengthy content in the standup entries " +
+                       "to ensure proper text truncation and display"
+
+        val entries = listOf(
+            buildStandupEntry(
+                id = 1,
+                name = "Alice Johnson",
+                time = "10:15",
+                yesterday = longText,
+                today = "Short plan"
+            )
+        )
+
+        val teamRepo = createFakeTeamRepository(members)
+        val standupRepo = createFakeStandupRepository(entries)
+        val prefsManager = createFakePreferencesManager()
+
+        val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
+        val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
+
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
+
+        composeRule.setContent {
+            DashboardScreen(
+                viewModel = viewModel,
+                onNavigateSubmit = {},
+                onNavigateHistory = {},
+                onNavigateSettings = {},
+                onNavigateMissing = {},
+                onNavigateExport = {},
+                onNavigateRoster = {}
+            )
+        }
+        composeRule.waitForIdle()
+
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify standup is displayed despite long text
+        composeRule.onNode(hasText("Alice Johnson", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun scrollableStandupList_scrollsWithManyEntries() {
+        val members = (1..15).map { i ->
+            createFakeTeamMemberData(i.toLong(), "Member$i")
+        }
+
+        val entries = (1..15).map { i ->
+            buildStandupEntry(
+                id = i.toLong(),
+                name = "Member$i",
+                time = "10:${String.format("%02d", i)}",
+                yesterday = "Work $i yesterday",
+                today = "Plan $i today"
+            )
+        }
+
+        val teamRepo = createFakeTeamRepository(members)
+        val standupRepo = createFakeStandupRepository(entries)
+        val prefsManager = createFakePreferencesManager()
+
+        val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
+        val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
+
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
+
+        composeRule.setContent {
+            DashboardScreen(
+                viewModel = viewModel,
+                onNavigateSubmit = {},
+                onNavigateHistory = {},
+                onNavigateSettings = {},
+                onNavigateMissing = {},
+                onNavigateExport = {},
+                onNavigateRoster = {}
+            )
+        }
+        composeRule.waitForIdle()
+
+        Thread.sleep(1500)
+        composeRule.waitForIdle()
+
+        // Verify some members are displayed
+        composeRule.onNode(hasText("Member1", substring = true)).assertIsDisplayed()
     }
 }

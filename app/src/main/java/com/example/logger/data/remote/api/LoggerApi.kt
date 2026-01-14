@@ -24,7 +24,8 @@ interface LoggerApi {
         @Query("page") page: Int? = null,
         @Query("size") size: Int? = null,
         @Query("teamMemberId") teamMemberId: Long? = null,
-        @Query("standupDate") standupDate: String? = null
+        @Query("standupDate") standupDate: String? = null,
+        @Query("status") status: String? = null
     ): PaginatedStandupEntriesDto
 
     @POST("teams/1/members/standups")

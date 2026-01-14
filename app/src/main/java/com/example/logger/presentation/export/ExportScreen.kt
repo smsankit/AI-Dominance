@@ -1,6 +1,5 @@
 package com.example.logger.presentation.export
 
-import android.app.Activity
 import android.app.DatePickerDialog
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -52,7 +51,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.logger.R
-import com.example.logger.core.util.DateFormatter
 import java.util.Calendar
 import java.util.Locale
 
@@ -72,10 +70,10 @@ fun ExportScreen(
     val standups = remember(uiState.standupEntries) {
         uiState.standupEntries.map { entry ->
             ExportStandupUiModel(
-                name = entry.teamMember?.name ?: "Team Member #${entry.teamMemberId}",
+                name = entry.teamMember.name,
                 time = entry.createdAt ?: "--:--",
-                yesterday = entry.yesterdayWork,
-                today = entry.todayPlan,
+                yesterday = entry.yesterdayWork ?: "N/A",
+                today = entry.todayPlan ?: "N/A",
                 blockers = entry.blockers,
                 editedAt = entry.updatedAt
             )
@@ -254,11 +252,11 @@ fun ExportScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(stringResource(R.string.export_preview), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                            Text(stringResource(R.string.export_count, standups.size), color = Color(0xFF666666))
+                            Text("${standups.size} submitted, ${uiState.missingNames.size} missing", color = Color(0xFF666666))
                         }
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            text = standupsToMarkdown(uiState.selectedDate, standups),
+                            text = standupsToMarkdown(uiState.selectedDate, standups, uiState.missingNames),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFF333333),
                             modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
@@ -281,16 +279,37 @@ data class ExportStandupUiModel(
     val editedAt: String?
 )
 
-fun standupsToMarkdown(date: String, standups: List<ExportStandupUiModel>): String {
-    if (standups.isEmpty()) return "# Team Standups - $date\n\nNo standups for this date.\n"
+fun standupsToMarkdown(date: String, standups: List<ExportStandupUiModel>, missingNames: List<String> = emptyList()): String {
+    val missingCount = missingNames.size
+    val submittedCount = standups.size
+
+    if (standups.isEmpty() && missingNames.isEmpty()) {
+        return "# Team Standups - $date\n\nNo standups for this date.\n"
+    }
+
     return buildString {
         appendLine("# Team Standups - $date\n")
-        for (s in standups) {
-            appendLine("## ${s.name} (${s.time})")
-            appendLine("- Yesterday: ${s.yesterday}")
-            appendLine("- Today: ${s.today}")
-            appendLine("- Blockers: ${s.blockers?.ifBlank { "None" } ?: "None"}")
-            if (!s.editedAt.isNullOrBlank()) appendLine("- Edited: ${s.editedAt}")
+        appendLine("**Submitted:** $submittedCount | **Missing:** $missingCount\n")
+
+        // Show submitted standups
+        if (standups.isNotEmpty()) {
+            appendLine("## Submitted Standups\n")
+            for (s in standups) {
+                appendLine("### ${s.name} (${s.time})")
+                appendLine("- Yesterday: ${s.yesterday}")
+                appendLine("- Today: ${s.today}")
+                appendLine("- Blockers: ${s.blockers?.ifBlank { "None" } ?: "None"}")
+                if (!s.editedAt.isNullOrBlank()) appendLine("- Edited: ${s.editedAt}")
+                appendLine()
+            }
+        }
+
+        // Show missing members
+        if (missingNames.isNotEmpty()) {
+            appendLine("## Missing Standups ($missingCount)\n")
+            for (name in missingNames) {
+                appendLine("- $name")
+            }
             appendLine()
         }
     }

@@ -13,14 +13,16 @@ class GetTodayStandupUseCase @Inject constructor(
         page: Int? = null,
         size: Int? = null,
         teamMemberId: Long? = null,
-        standupDate: String? = null
+        standupDate: String? = null,
+        status: String? = null
     ): NetworkResult<PaginatedStandupEntriesData> {
         return repository.getStandupEntries(
             teamId = teamId,
             page = page,
             size = size,
             teamMemberId = teamMemberId,
-            standupDate = standupDate
+            standupDate = standupDate,
+            status = status
         )
     }
 }
