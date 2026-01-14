@@ -14,9 +14,11 @@ import com.example.logger.domain.model.PaginationMetaData
 import com.example.logger.domain.model.StandupEntryData
 import com.example.logger.domain.model.TeamMember
 import com.example.logger.domain.model.TeamMemberData
+import com.example.logger.domain.model.TeamSentimentItem
 import com.example.logger.domain.repository.StandupRepository
 import com.example.logger.domain.repository.TeamRepository
 import com.example.logger.domain.usecase.GetTeamMembersUseCase
+import com.example.logger.domain.usecase.GetTeamSentimentsUseCase
 import com.example.logger.domain.usecase.GetTodayStandupUseCase
 import com.example.logger.presentation.dashboard.DashboardScreen
 import com.example.logger.presentation.home.HomeViewModel
@@ -75,6 +77,10 @@ class DashboardScreenTest {
             override fun getTeamMembers(teamId: Long, page: Int, size: Int): Flow<NetworkResult<List<TeamMemberData>>> {
                 return flowOf(NetworkResult.Success(members))
             }
+
+            override fun getTeamSentiments(teamId: Long, from: String?, to: String?): Flow<NetworkResult<List<TeamSentimentItem>>> {
+                return flowOf(NetworkResult.Success(emptyList()))
+            }
         }
     }
 
@@ -127,8 +133,9 @@ class DashboardScreenTest {
 
         val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
         val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
 
-        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
 
         composeRule.setContent {
             DashboardScreen(
@@ -164,8 +171,9 @@ class DashboardScreenTest {
 
         val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
         val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
 
-        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
 
         composeRule.setContent {
             DashboardScreen(
@@ -211,8 +219,9 @@ class DashboardScreenTest {
 
         val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
         val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
 
-        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
 
         composeRule.setContent {
             DashboardScreen(
@@ -269,8 +278,9 @@ class DashboardScreenTest {
 
         val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
         val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
 
-        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
 
         composeRule.setContent {
             DashboardScreen(
@@ -323,8 +333,9 @@ class DashboardScreenTest {
 
         val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
         val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
 
-        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
 
         composeRule.setContent {
             DashboardScreen(
@@ -362,8 +373,9 @@ class DashboardScreenTest {
 
         val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
         val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
 
-        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
 
         composeRule.setContent {
             DashboardScreen(
@@ -409,8 +421,9 @@ class DashboardScreenTest {
 
         val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
         val getTodayStandupUseCase = GetTodayStandupUseCase(errorRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
 
-        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
 
         composeRule.setContent {
             DashboardScreen(
@@ -441,8 +454,9 @@ class DashboardScreenTest {
 
         val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
         val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
 
-        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
 
         composeRule.setContent {
             DashboardScreen(
@@ -487,8 +501,9 @@ class DashboardScreenTest {
 
         val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
         val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
 
-        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
 
         composeRule.setContent {
             DashboardScreen(
@@ -543,8 +558,9 @@ class DashboardScreenTest {
 
         val getTeamMembersUseCase = GetTeamMembersUseCase(teamRepo, prefsManager)
         val getTodayStandupUseCase = GetTodayStandupUseCase(standupRepo)
+        val getTeamSentimentsUseCase = GetTeamSentimentsUseCase(teamRepo)
 
-        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase)
+        val viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
 
         composeRule.setContent {
             DashboardScreen(
@@ -570,4 +586,3 @@ class DashboardScreenTest {
         // All members have submitted, so pending count should be 0
     }
 }
-

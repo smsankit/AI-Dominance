@@ -15,6 +15,7 @@ import com.example.logger.domain.model.StandupEntryData
 import com.example.logger.domain.model.StandupEntryRequestData
 import com.example.logger.domain.model.TeamMember
 import com.example.logger.domain.model.TeamMemberData
+import com.example.logger.domain.model.TeamSentimentItem
 import com.example.logger.domain.repository.StandupRepository
 import com.example.logger.domain.repository.TeamRepository
 import com.example.logger.domain.usecase.GetTeamMembersUseCase
@@ -38,6 +39,10 @@ class SubmitStandupScreenTest {
         return object : TeamRepository {
             override fun getTeamMembers(teamId: Long, page: Int, size: Int): Flow<NetworkResult<List<TeamMemberData>>> {
                 return flowOf(NetworkResult.Success(members))
+            }
+
+            override fun getTeamSentiments(teamId: Long, from: String?, to: String?): Flow<NetworkResult<List<TeamSentimentItem>>> {
+                return flowOf(NetworkResult.Success(emptyList()))
             }
         }
     }
