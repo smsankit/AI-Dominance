@@ -28,6 +28,7 @@ import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import org.mockito.kotlin.verify
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
@@ -160,5 +161,60 @@ class HomeViewModelTest {
         // submissions remain empty on error
         assertTrue(state.submissions.isEmpty())
     }
-}
 
+    @Test
+    fun `sentiments success maps counts and clears loading`() {
+        val emptyPage = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 0, totalPages = 1)
+        )
+        runBlocking {
+            whenever(
+                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+            ).thenReturn(NetworkResult.Success(emptyPage))
+        }
+        val sentiments = listOf(
+            TeamSentimentItem(id = 1, standupEntryId = 10, value = 1, createdAt = "", updatedAt = ""),
+            TeamSentimentItem(id = 2, standupEntryId = 11, value = 1, createdAt = "", updatedAt = ""),
+            TeamSentimentItem(id = 3, standupEntryId = 12, value = 0, createdAt = "", updatedAt = ""),
+            TeamSentimentItem(id = 4, standupEntryId = 13, value = -1, createdAt = "", updatedAt = "")
+        )
+        whenever(getTeamSentimentsUseCase.invoke(eq(1L), anyOrNull(), anyOrNull()))
+            .thenReturn(flowOf(NetworkResult.Success(sentiments)))
+
+        viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(getTeamSentimentsUseCase).invoke(eq(1L), anyOrNull(), anyOrNull())
+        val state = viewModel.uiState.value
+        assertFalse(state.isSentimentLoading)
+        assertEquals(null, state.sentimentError)
+        assertEquals(2, state.sentimentSummary?.positive)
+        assertEquals(1, state.sentimentSummary?.neutral)
+        assertEquals(1, state.sentimentSummary?.negative)
+        assertEquals(4, state.sentimentSummary?.total)
+    }
+
+    @Test
+    fun `sentiments error sets error and clears loading`() {
+        val emptyPage = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 0, totalPages = 1)
+        )
+        runBlocking {
+            whenever(
+                getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+            ).thenReturn(NetworkResult.Success(emptyPage))
+        }
+        whenever(getTeamSentimentsUseCase.invoke(eq(1L), anyOrNull(), anyOrNull()))
+            .thenReturn(flowOf(NetworkResult.Error("sentiment fail")))
+
+        viewModel = HomeViewModel(getTodayStandupUseCase, getTeamMembersUseCase, getTeamSentimentsUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isSentimentLoading)
+        assertEquals("sentiment fail", state.sentimentError)
+        assertEquals(null, state.sentimentSummary)
+    }
+}

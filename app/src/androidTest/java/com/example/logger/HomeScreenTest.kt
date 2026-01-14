@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.logger.presentation.home.HomeUiState
 import com.example.logger.presentation.home.HomeScreen
 import com.example.logger.domain.model.Standup
+import com.example.logger.domain.model.SentimentSummary
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -103,17 +104,41 @@ class HomeScreenTest {
         composeTestRule.onNodeWithText("Priya Verma").assertIsDisplayed()
     }
 
+    // TeamMoodCard coverage below
+
     @Test
-    fun pendingBar_showsMissingCount_andViewMissingButton() {
+    fun teamMood_loading_showsArrow_andInvokesNavigationOnClick() {
+        var clicked = false
         composeTestRule.setContent {
             HomeScreen(
                 state = HomeUiState(
                     isLoading = false,
-                    error = null,
-                    submissions = emptyList(),
-                    roster = listOf("Alex", "Priya", "Miguel"),
-                    pending = listOf("Miguel"),
-                    pendingCount = 1
+                    sentimentSummary = null,
+                    isSentimentLoading = true,
+                    sentimentError = null
+                ),
+                onRetry = {},
+                onViewMissing = {},
+                onSubmit = {},
+                onExport = {},
+                onLoadMore = {},
+                onViewRoster = {},
+                onNavigateToSentimentAnalysis = { clicked = true }
+            )
+        }
+        composeTestRule.onNodeWithContentDescription("View Sentiment Analysis").assertIsDisplayed().performClick()
+        assert(clicked)
+    }
+
+    @Test
+    fun teamMood_error_showsUnableToLoadMessage() {
+        composeTestRule.setContent {
+            HomeScreen(
+                state = HomeUiState(
+                    isLoading = false,
+                    sentimentSummary = null,
+                    isSentimentLoading = false,
+                    sentimentError = "boom"
                 ),
                 onRetry = {},
                 onViewMissing = {},
@@ -123,7 +148,55 @@ class HomeScreenTest {
                 onViewRoster = {},
             )
         }
-        composeTestRule.onNodeWithText("1 team member missing").assertIsDisplayed()
-        composeTestRule.onNodeWithText("View Missing Standups").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Unable to load team mood").assertIsDisplayed()
+    }
+
+    @Test
+    fun teamMood_noDataToday_showsMessage_andNoArrow() {
+        composeTestRule.setContent {
+            HomeScreen(
+                state = HomeUiState(
+                    isLoading = false,
+                    sentimentSummary = SentimentSummary(positive = 0, neutral = 0, negative = 0, total = 0),
+                    isSentimentLoading = false,
+                    sentimentError = null
+                ),
+                onRetry = {},
+                onViewMissing = {},
+                onSubmit = {},
+                onExport = {},
+                onLoadMore = {},
+                onViewRoster = {},
+                onNavigateToSentimentAnalysis = {}
+            )
+        }
+        composeTestRule.onNodeWithText("No sentiment data today").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("View Sentiment Analysis").assertDoesNotExist()
+    }
+
+    @Test
+    fun teamMood_positiveSummary_showsTexts_andArrowWorks() {
+        var clicked = false
+        composeTestRule.setContent {
+            HomeScreen(
+                state = HomeUiState(
+                    isLoading = false,
+                    sentimentSummary = SentimentSummary(positive = 5, neutral = 2, negative = 1, total = 8),
+                    isSentimentLoading = false,
+                    sentimentError = null
+                ),
+                onRetry = {},
+                onViewMissing = {},
+                onSubmit = {},
+                onExport = {},
+                onLoadMore = {},
+                onViewRoster = {},
+                onNavigateToSentimentAnalysis = { clicked = true }
+            )
+        }
+        composeTestRule.onNodeWithText("Team Mood: Positive 🙂").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Based on 8 submissions. Team morale is good!").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("View Sentiment Analysis").assertIsDisplayed().performClick()
+        assert(clicked)
     }
 }
