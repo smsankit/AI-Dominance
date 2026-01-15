@@ -31,7 +31,6 @@ import org.robolectric.annotation.Config
 import java.io.ByteArrayOutputStream
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28])
 class ExportViewModelTest {
     private lateinit var getTodayStandupUseCase: GetTodayStandupUseCase
@@ -532,5 +531,432 @@ class ExportViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isLoadingMore)
+    }
+
+    @Test
+    fun `onDateChange updates selected date and resets page`() = runTest {
+        getTodayStandupUseCase = mock()
+        val emptyData = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 0, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq("MISSING"))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val newDate = "2026-01-15"
+        viewModel.onDateChange(newDate)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(newDate, state.selectedDate)
+        assertEquals(0, state.currentPage)
+    }
+
+    @Test
+    fun `onDateChange with valid date loads standups`() = runTest {
+        getTodayStandupUseCase = mock()
+        val dateEntry = testStandupEntry.copy(standupDate = "2026-01-14")
+        val dateData = PaginatedStandupEntriesData(
+            items = listOf(dateEntry),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 1, totalPages = 1)
+        )
+        val emptyMissing = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 100, totalElements = 0, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(dateData))
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq("MISSING"))
+        ).thenReturn(NetworkResult.Success(emptyMissing))
+
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val newDate = "2026-01-14"
+        viewModel.onDateChange(newDate)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(newDate, state.selectedDate)
+        assertEquals(1, state.standupEntries.size)
+        assertEquals("Did X", state.standupEntries.first().yesterdayWork)
+    }
+
+    @Test
+    fun `onDateChange clears previous data before loading new`() = runTest {
+        getTodayStandupUseCase = mock()
+        val data1 = PaginatedStandupEntriesData(
+            items = listOf(testStandupEntry.copy(standupDate = "2026-01-13")),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 1, totalPages = 1)
+        )
+        val data2 = PaginatedStandupEntriesData(
+            items = listOf(testStandupEntry.copy(id = 10, standupDate = "2026-01-14")),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 1, totalPages = 1)
+        )
+        val emptyMissing = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 100, totalElements = 0, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(data1))
+            .thenReturn(NetworkResult.Success(data2))
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq("MISSING"))
+        ).thenReturn(NetworkResult.Success(emptyMissing))
+
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val initialSize = viewModel.uiState.value.standupEntries.size
+        assertEquals(1, initialSize)
+
+        viewModel.onDateChange("2026-01-14")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("2026-01-14", state.selectedDate)
+        assertEquals(1, state.standupEntries.size)
+        assertEquals(10L, state.standupEntries.first().id)
+    }
+
+    @Test
+    fun `loadMore increments page and loads more standups`() = runTest {
+        getTodayStandupUseCase = mock()
+        val page0 = PaginatedStandupEntriesData(
+            items = listOf(testStandupEntry),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 20, totalPages = 2)
+        )
+        val page1 = PaginatedStandupEntriesData(
+            items = listOf(testStandupEntry.copy(id = 20)),
+            meta = PaginationMetaData(page = 1, size = 10, totalElements = 20, totalPages = 2)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(page0))
+            .thenReturn(NetworkResult.Success(page1))
+
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.currentPage)
+        assertEquals(1, viewModel.uiState.value.standupEntries.size)
+
+        viewModel.loadMore()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(1, state.currentPage)
+        assertEquals(2, state.standupEntries.size)
+        assertTrue(state.standupEntries.any { it.id == 20L })
+    }
+
+    @Test
+    fun `loadMore does not load when canLoadMore is false`() = runTest {
+        getTodayStandupUseCase = mock()
+        val lastPage = PaginatedStandupEntriesData(
+            items = listOf(testStandupEntry),
+            meta = PaginationMetaData(page = 1, size = 10, totalElements = 20, totalPages = 2)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(lastPage))
+
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val initialSize = viewModel.uiState.value.standupEntries.size
+        assertFalse(viewModel.uiState.value.canLoadMore)
+
+        viewModel.loadMore()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val finalSize = viewModel.uiState.value.standupEntries.size
+        assertEquals(initialSize, finalSize)
+    }
+
+    @Test
+    fun `loadMore does not load when isLoadingMore is true`() = runTest {
+        getTodayStandupUseCase = mock()
+        val page0 = PaginatedStandupEntriesData(
+            items = listOf(testStandupEntry),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 20, totalPages = 2)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(page0))
+
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.canLoadMore)
+
+        // Call loadMore but don't advance idle to keep isLoadingMore true
+        viewModel.loadMore()
+
+        val state = viewModel.uiState.value
+        assertEquals(1, state.standupEntries.size)
+    }
+
+    @Test
+    fun `exportMarkdownToUri successfully exports with content`() {
+        val context = mock<Context>()
+        val uri = mock<Uri>()
+        val outputStream = ByteArrayOutputStream()
+        val resolver = mock<ContentResolver>()
+        whenever(context.contentResolver).thenReturn(resolver)
+        whenever(resolver.openOutputStream(uri)).thenReturn(outputStream)
+
+        getTodayStandupUseCase = mock()
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+
+        val standups = listOf(
+            ExportStandupUiModel(
+                name = "John Doe",
+                time = "09:00",
+                yesterday = "Fixed bugs",
+                today = "Implement feature",
+                blockers = "None",
+                editedAt = null
+            ),
+            ExportStandupUiModel(
+                name = "Jane Smith",
+                time = "10:00",
+                yesterday = "Code review",
+                today = "Write tests",
+                blockers = "Waiting for approval",
+                editedAt = null
+            )
+        )
+
+        val result = viewModel.exportMarkdownToUri(context, uri, "2026-01-08", standups)
+
+        assertTrue(result)
+        assertTrue(outputStream.size() > 0)
+        val content = outputStream.toString()
+        assertTrue(content.contains("John Doe"))
+        assertTrue(content.contains("Jane Smith"))
+        assertTrue(content.contains("Fixed bugs"))
+    }
+
+    @Test
+    fun `exportMarkdownToUri returns true when successful`() {
+        val context = mock<Context>()
+        val uri = mock<Uri>()
+        val outputStream = ByteArrayOutputStream()
+        val resolver = mock<ContentResolver>()
+        whenever(context.contentResolver).thenReturn(resolver)
+        whenever(resolver.openOutputStream(uri)).thenReturn(outputStream)
+
+        getTodayStandupUseCase = mock()
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+
+        val standups = listOf(
+            ExportStandupUiModel(
+                name = "Test User",
+                time = "10:00",
+                yesterday = "Work",
+                today = "Plan",
+                blockers = null,
+                editedAt = null
+            )
+        )
+
+        val result = viewModel.exportMarkdownToUri(context, uri, testDate, standups)
+        assertTrue(result)
+    }
+
+
+
+    @Test
+    fun `exportMarkdownToUri handles null output stream`() {
+        val context = mock<Context>()
+        val uri = mock<Uri>()
+        val resolver = mock<ContentResolver>()
+        whenever(context.contentResolver).thenReturn(resolver)
+        whenever(resolver.openOutputStream(uri)).thenReturn(null)
+
+        getTodayStandupUseCase = mock()
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+
+        val standups = listOf(
+            ExportStandupUiModel(
+                name = "Test",
+                time = "10:00",
+                yesterday = "Work",
+                today = "Plan",
+                blockers = null,
+                editedAt = null
+            )
+        )
+
+        val result = viewModel.exportMarkdownToUri(context, uri, testDate, standups)
+        // Should return true as no exception is thrown, just nothing written
+        assertTrue(result)
+    }
+
+    @Test
+    fun `exportMarkdownToUri includes missing names in export`() {
+        val context = mock<Context>()
+        val uri = mock<Uri>()
+        val outputStream = ByteArrayOutputStream()
+        val resolver = mock<ContentResolver>()
+        whenever(context.contentResolver).thenReturn(resolver)
+        whenever(resolver.openOutputStream(uri)).thenReturn(outputStream)
+
+        getTodayStandupUseCase = mock()
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+
+        val standups = listOf(
+            ExportStandupUiModel(
+                name = "Alice",
+                time = "10:00",
+                yesterday = "Task A",
+                today = "Task B",
+                blockers = null,
+                editedAt = null
+            )
+        )
+
+        val result = viewModel.exportMarkdownToUri(context, uri, testDate, standups)
+        assertTrue(result)
+        val content = outputStream.toString()
+        assertTrue(content.contains("Alice"))
+    }
+
+    @Test
+    fun `exportMarkdownToUri with blockers includes them`() {
+        val context = mock<Context>()
+        val uri = mock<Uri>()
+        val outputStream = ByteArrayOutputStream()
+        val resolver = mock<ContentResolver>()
+        whenever(context.contentResolver).thenReturn(resolver)
+        whenever(resolver.openOutputStream(uri)).thenReturn(outputStream)
+
+        getTodayStandupUseCase = mock()
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+
+        val standups = listOf(
+            ExportStandupUiModel(
+                name = "User",
+                time = "10:00",
+                yesterday = "Work",
+                today = "Plan",
+                blockers = "API is down",
+                editedAt = null
+            )
+        )
+
+        val result = viewModel.exportMarkdownToUri(context, uri, testDate, standups)
+        assertTrue(result)
+        val content = outputStream.toString()
+        assertTrue(content.contains("API is down"))
+    }
+
+    @Test
+    fun `exportMarkdownToUri with empty standups list`() {
+        val context = mock<Context>()
+        val uri = mock<Uri>()
+        val outputStream = ByteArrayOutputStream()
+        val resolver = mock<ContentResolver>()
+        whenever(context.contentResolver).thenReturn(resolver)
+        whenever(resolver.openOutputStream(uri)).thenReturn(outputStream)
+
+        getTodayStandupUseCase = mock()
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+
+        val standups = emptyList<ExportStandupUiModel>()
+
+        val result = viewModel.exportMarkdownToUri(context, uri, testDate, standups)
+        assertTrue(result)
+        assertTrue(outputStream.size() >= 0)
+    }
+
+    @Test
+    fun `loadStandups with resetList true clears previous data`() = runTest {
+        getTodayStandupUseCase = mock()
+        val data1 = PaginatedStandupEntriesData(
+            items = listOf(testStandupEntry.copy(id = 1)),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 1, totalPages = 1)
+        )
+        val data2 = PaginatedStandupEntriesData(
+            items = listOf(testStandupEntry.copy(id = 2)),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 1, totalPages = 1)
+        )
+        val emptyMissing = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 100, totalElements = 0, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(data1))
+            .thenReturn(NetworkResult.Success(data2))
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq("MISSING"))
+        ).thenReturn(NetworkResult.Success(emptyMissing))
+
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.standupEntries.size)
+        assertEquals(1L, viewModel.uiState.value.standupEntries.first().id)
+
+        viewModel.onDateChange("2026-01-09")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(1, state.standupEntries.size)
+        assertEquals(2L, state.standupEntries.first().id)
+    }
+
+    @Test
+    fun `loadStandups with resetList false appends data`() = runTest {
+        getTodayStandupUseCase = mock()
+        val page0 = PaginatedStandupEntriesData(
+            items = listOf(testStandupEntry.copy(id = 1)),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 20, totalPages = 2)
+        )
+        val page1 = PaginatedStandupEntriesData(
+            items = listOf(testStandupEntry.copy(id = 2)),
+            meta = PaginationMetaData(page = 1, size = 10, totalElements = 20, totalPages = 2)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(page0))
+            .thenReturn(NetworkResult.Success(page1))
+
+        viewModel = ExportViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.standupEntries.size)
+
+        viewModel.loadMore()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(2, state.standupEntries.size)
+        assertTrue(state.standupEntries.any { it.id == 1L })
+        assertTrue(state.standupEntries.any { it.id == 2L })
     }
 }

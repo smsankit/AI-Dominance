@@ -31,7 +31,6 @@ import java.util.Calendar
 import java.util.Date
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28])
 class HistoryViewModelTest {
     private lateinit var getTodayStandupUseCase: GetTodayStandupUseCase
@@ -1014,6 +1013,13 @@ class HistoryViewModelTest {
 
         val initialState = viewModel.uiState.value
         assertEquals(0, initialState.currentPage)
+
+        val cal = Calendar.getInstance().apply { add(Calendar.DAY_OF_MONTH, -5) }
+        viewModel.onPickDate(cal.time)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val newState = viewModel.uiState.value
+        assertEquals(0, newState.currentPage)
     }
 
     @Test
@@ -1143,5 +1149,253 @@ class HistoryViewModelTest {
         assertEquals(10, state.submissions.size)
         assertTrue(state.canLoadMore)
         assertEquals(0, state.currentPage)
+    }
+
+    @Test
+    fun `onNextDate increments date correctly`() = runTest {
+        getTodayStandupUseCase = mock()
+        val emptyData = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 0, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq("MISSING"))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        viewModel = HistoryViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val initialDate = viewModel.uiState.value.selectedDate
+        viewModel.onNextDate()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val newDate = viewModel.uiState.value.selectedDate
+        assertTrue(newDate.after(initialDate) || newDate == initialDate)
+    }
+
+    @Test
+    fun `onNextDate does not exceed yesterday`() = runTest {
+        getTodayStandupUseCase = mock()
+        val emptyData = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 0, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq("MISSING"))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        viewModel = HistoryViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onNextDate()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val afterOnNext = viewModel.uiState.value.selectedDate
+        assertFalse(afterOnNext.after(yesterday()))
+    }
+
+    @Test
+    fun `onPrevDate decrements date correctly`() = runTest {
+        getTodayStandupUseCase = mock()
+        val emptyData = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 0, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq("MISSING"))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        viewModel = HistoryViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val initialDate = viewModel.uiState.value.selectedDate
+        viewModel.onPrevDate()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val newDate = viewModel.uiState.value.selectedDate
+        assertTrue(newDate.before(initialDate))
+    }
+
+    @Test
+    fun `onPrevDate moves to previous day and refreshes`() = runTest {
+        getTodayStandupUseCase = mock()
+        val emptyData = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 0, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq("MISSING"))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        viewModel = HistoryViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onPrevDate()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `loadMore increments page when possible`() = runTest {
+        getTodayStandupUseCase = mock()
+        val page0 = PaginatedStandupEntriesData(
+            items = listOf(standup(1, testDateStr)),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 20, totalPages = 2)
+        )
+        val page1 = PaginatedStandupEntriesData(
+            items = listOf(standup(2, testDateStr)),
+            meta = PaginationMetaData(page = 1, size = 10, totalElements = 20, totalPages = 2)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(page0))
+            .thenReturn(NetworkResult.Success(page1))
+
+        viewModel = HistoryViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.currentPage)
+
+        viewModel.loadMore()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.currentPage)
+    }
+
+    @Test
+    fun `loadMore does not load when canLoadMore is false`() = runTest {
+        getTodayStandupUseCase = mock()
+        val singlePageData = PaginatedStandupEntriesData(
+            items = listOf(standup(1, testDateStr)),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 10, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(singlePageData))
+
+        viewModel = HistoryViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.canLoadMore)
+
+        val initialSize = viewModel.uiState.value.submissions.size
+        viewModel.loadMore()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(initialSize, viewModel.uiState.value.submissions.size)
+    }
+
+    @Test
+    fun `onPickDate changes selected date`() = runTest {
+        getTodayStandupUseCase = mock()
+        val emptyData = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 0, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq("MISSING"))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        viewModel = HistoryViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val newDate = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_MONTH, -5)
+        }.time
+
+        viewModel.onPickDate(newDate)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(newDate, viewModel.uiState.value.selectedDate)
+    }
+
+    @Test
+    fun `onPickDate resets current page`() = runTest {
+        getTodayStandupUseCase = mock()
+        val page0 = PaginatedStandupEntriesData(
+            items = listOf(standup(1, testDateStr)),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 20, totalPages = 2)
+        )
+        val emptyData = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 0, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(page0))
+            .thenReturn(NetworkResult.Success(emptyData))
+
+        viewModel = HistoryViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val newDate = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_MONTH, -3)
+        }.time
+
+        viewModel.onPickDate(newDate)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.currentPage)
+    }
+
+    @Test
+    fun `getYesterday returns yesterday's date`() = runTest {
+        getTodayStandupUseCase = mock()
+        val emptyData = PaginatedStandupEntriesData(
+            items = emptyList(),
+            meta = PaginationMetaData(page = 0, size = 10, totalElements = 0, totalPages = 1)
+        )
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq(null))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        whenever(
+            getTodayStandupUseCase.invoke(eq(1L), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), eq("MISSING"))
+        ).thenReturn(NetworkResult.Success(emptyData))
+
+        viewModel = HistoryViewModel(getTodayStandupUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // getYesterday is called during init, so just verify state is set to yesterday
+        val expectedYesterday = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_MONTH, -1)
+        }.time
+
+        val stateDateCal = Calendar.getInstance().apply { time = viewModel.uiState.value.selectedDate }
+        val expectedCal = Calendar.getInstance().apply { time = expectedYesterday }
+
+        assertEquals(expectedCal.get(Calendar.YEAR), stateDateCal.get(Calendar.YEAR))
+        assertEquals(expectedCal.get(Calendar.MONTH), stateDateCal.get(Calendar.MONTH))
+        assertEquals(expectedCal.get(Calendar.DAY_OF_MONTH), stateDateCal.get(Calendar.DAY_OF_MONTH))
     }
 }

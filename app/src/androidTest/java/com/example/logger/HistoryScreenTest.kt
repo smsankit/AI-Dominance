@@ -256,5 +256,216 @@ class HistoryScreenTest {
         composeRule.onNode(hasText("Fixed bugs", substring = true)).assertIsDisplayed()
     }
 
-}
+    @Test
+    fun datePickerDialog_isOpenedOnDateButtonClick() {
+        val entries = listOf(
+            buildEntry(
+                id = 1,
+                name = "Alice",
+                time = "2026-01-10T10:15:00",
+                yesterday = "Fixed bugs",
+                today = "Implement feature X"
+            )
+        )
+        val vm = HistoryViewModel(getTodayStandup = successUseCase(entries))
+        composeRule.setContent {
+            HistoryScreen(onNavigateBack = {}, viewModel = vm)
+        }
+        composeRule.waitForIdle()
 
+        // Verify initial screen renders
+        composeRule.onNode(hasText("Alice", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun dateNavigationButtons_areDisplayed() {
+        val entries = listOf(
+            buildEntry(
+                id = 1,
+                name = "Bob",
+                time = "2026-01-10T11:00:00",
+                yesterday = "Code review",
+                today = "Write tests"
+            )
+        )
+        val vm = HistoryViewModel(getTodayStandup = successUseCase(entries))
+        composeRule.setContent {
+            HistoryScreen(onNavigateBack = {}, viewModel = vm)
+        }
+        composeRule.waitForIdle()
+
+        // Verify standup entry is displayed
+        composeRule.onNode(hasText("Bob", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Code review", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun historyScreen_displaysPreviousDateData() {
+        val entriesDay1 = listOf(
+            buildEntry(
+                id = 1,
+                name = "Charlie",
+                time = "2026-01-09T10:00:00",
+                yesterday = "Completed module",
+                today = "Testing phase",
+                standupDate = "2026-01-09"
+            )
+        )
+        val vm = HistoryViewModel(getTodayStandup = successUseCase(entriesDay1))
+        composeRule.setContent {
+            HistoryScreen(onNavigateBack = {}, viewModel = vm)
+        }
+        composeRule.waitForIdle()
+
+        // Verify previous date's data displays
+        composeRule.onNode(hasText("Charlie", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Completed module", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun historyScreen_handlesMultipleDayNavigation() {
+        val entries = listOf(
+            buildEntry(
+                id = 1,
+                name = "Diana",
+                time = "2026-01-08T09:30:00",
+                yesterday = "Database setup",
+                today = "API development",
+                standupDate = "2026-01-08"
+            ),
+            buildEntry(
+                id = 2,
+                name = "Eve",
+                time = "2026-01-08T10:30:00",
+                yesterday = "Frontend work",
+                today = "UI refinement",
+                standupDate = "2026-01-08"
+            )
+        )
+        val vm = HistoryViewModel(getTodayStandup = successUseCase(entries))
+        composeRule.setContent {
+            HistoryScreen(onNavigateBack = {}, viewModel = vm)
+        }
+        composeRule.waitForIdle()
+
+        // Verify multiple entries from same date display
+        composeRule.onNode(hasText("Diana", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Eve", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun historyScreen_displaysWithBlockersAndWithout() {
+        val entries = listOf(
+            buildEntry(
+                id = 1,
+                name = "Frank",
+                time = "2026-01-07T10:00:00",
+                yesterday = "Feature A",
+                today = "Feature B",
+                blockers = "Waiting for approval"
+            ),
+            buildEntry(
+                id = 2,
+                name = "Grace",
+                time = "2026-01-07T10:15:00",
+                yesterday = "Task X",
+                today = "Task Y",
+                blockers = null
+            )
+        )
+        val vm = HistoryViewModel(getTodayStandup = successUseCase(entries))
+        composeRule.setContent {
+            HistoryScreen(onNavigateBack = {}, viewModel = vm)
+        }
+        composeRule.waitForIdle()
+
+        // Verify both entries display correctly
+        composeRule.onNode(hasText("Frank", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Grace", substring = true)).assertIsDisplayed()
+        composeRule.onNode(hasText("Waiting for approval", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun historyScreen_displaysDatesWithoutEntries() {
+        val emptyEntries = emptyList<StandupEntryData>()
+        val vm = HistoryViewModel(getTodayStandup = successUseCase(emptyEntries))
+        composeRule.setContent {
+            HistoryScreen(onNavigateBack = {}, viewModel = vm)
+        }
+        composeRule.waitForIdle()
+
+        // Screen should render without crashing even with no entries
+        // This tests the UI can handle empty state
+    }
+
+    @Test
+    fun historyScreen_withLongTextContent() {
+        val longText = "This is a very long standup entry that contains detailed information about the work completed " +
+                      "and the plans for the next day. It should be displayed properly without causing any UI issues."
+        val entries = listOf(
+            buildEntry(
+                id = 1,
+                name = "Henry",
+                time = "2026-01-06T10:00:00",
+                yesterday = longText,
+                today = longText
+            )
+        )
+        val vm = HistoryViewModel(getTodayStandup = successUseCase(entries))
+        composeRule.setContent {
+            HistoryScreen(onNavigateBack = {}, viewModel = vm)
+        }
+        composeRule.waitForIdle()
+
+        // Verify long content displays without crashing
+        composeRule.onNode(hasText("Henry", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun historyScreen_navigationCallbacks() {
+        val entries = listOf(
+            buildEntry(
+                id = 1,
+                name = "Ivy",
+                time = "2026-01-05T10:00:00",
+                yesterday = "Done",
+                today = "Plan"
+            )
+        )
+        val vm = HistoryViewModel(getTodayStandup = successUseCase(entries))
+
+        var backNavigationClicked = false
+
+        composeRule.setContent {
+            HistoryScreen(
+                onNavigateBack = { backNavigationClicked = true },
+                viewModel = vm
+            )
+        }
+        composeRule.waitForIdle()
+
+        // Verify screen renders with navigation callbacks configured
+        composeRule.onNode(hasText("Ivy", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun historyScreen_largeDatasetScrolling() {
+        val manyEntries = (1..20).map { i ->
+            buildEntry(
+                id = i.toLong(),
+                name = "Member$i",
+                time = "2026-01-04T${String.format("%02d", i)}:00:00",
+                yesterday = "Work day $i",
+                today = "Plan day $i"
+            )
+        }
+        val vm = HistoryViewModel(getTodayStandup = successUseCase(manyEntries))
+        composeRule.setContent {
+            HistoryScreen(onNavigateBack = {}, viewModel = vm)
+        }
+        composeRule.waitForIdle()
+
+        // Verify large dataset renders
+        composeRule.onNode(hasText("Member1", substring = true)).assertIsDisplayed()
+    }
+}

@@ -45,6 +45,19 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+            all {
+                it.jvmArgs(
+                    "-Xmx2048m",
+                    "-XX:+HeapDumpOnOutOfMemoryError"
+                )
+            }
+        }
+    }
 }
 
 dependencies {
@@ -166,15 +179,11 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "**/androidx/databinding/**",
         "**/BR.*",
         "**/RosterScreenKt.class",
+
         "**/ComposableSingletons*.*",
         "**/*Composable*.*",
-
-        // Coroutines
         "**/*FlowCollector*.*",
-        "**/*SuspendLambda*.*",
-
-        // Anonymous inner classes: $1, $2, etc.
-        "**/*\\$[0-9]*.*"
+        "**/*SuspendLambda*.*"
     )
 
     val javaClasses = fileTree(
@@ -198,8 +207,8 @@ tasks.register<JacocoReport>("jacocoTestReport") {
     // Include both unit test and instrumented test execution data
     executionData.setFrom(fileTree(buildDir) {
         include(
-            "jacoco/testDebugUnitTest.exec",
             "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+            "jacoco/testDebugUnitTest.exec",
             "outputs/code_coverage/debugAndroidTest/connected/**/*.ec"
         )
     })
